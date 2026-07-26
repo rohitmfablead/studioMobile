@@ -1,10 +1,10 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { CheckSquare, ChevronDown, ChevronLeft, ChevronRight, Copy, Download, FolderOpen, Image as ImageIcon, LayoutGrid, Link as LinkIcon, MessageCircle, PlayCircle, Plus, QrCode, Settings, Share2, Trash2, Upload, UploadCloud, Users, Video, X, Heart, Check } from 'lucide-react-native';
-import { useState, useRef, useCallback } from 'react';
-import { Dimensions, FlatList, Image, ImageBackground, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View, Animated, ActivityIndicator, RefreshControl } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useGetGroupParticipantsMatchedQuery, useGetGroupPhotoDeleteRequestsQuery, useGetGroupVideoDeleteRequestsQuery, useGetGroupPhotosQuery, useUploadPhotosMutation } from '../../../store/apiSlice';
 import * as ImagePicker from 'expo-image-picker';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Check, CheckSquare, ChevronDown, ChevronLeft, ChevronRight, Copy, Download, FolderOpen, Heart, Image as ImageIcon, LayoutGrid, Link as LinkIcon, MessageCircle, PlayCircle, Plus, QrCode, Settings, Share2, Trash2, Upload, UploadCloud, Users, Video, X } from 'lucide-react-native';
+import { useCallback, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Dimensions, FlatList, Image, ImageBackground, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useGetGroupParticipantsMatchedQuery, useGetGroupPhotoDeleteRequestsQuery, useGetGroupPhotosQuery, useGetGroupVideoDeleteRequestsQuery, useUploadPhotosMutation } from '../../../store/apiSlice';
 
 const { width } = Dimensions.get('window');
 
@@ -37,22 +37,22 @@ export default function ParticipantEventGallery() {
   };
 
   const handleUpload = async () => {
+    console.log('Initiating upload...', selectedUploadAssets);
     if (selectedUploadAssets.length === 0) return;
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      selectedUploadAssets.forEach((asset, index) => {
-        formData.append('photos[]', {
-          uri: asset.uri,
-          name: asset.fileName || `photo_${index}.jpg`,
-          type: asset.mimeType || 'image/jpeg',
-        } as any);
-      });
-      formData.append('enable_watermark', '0');
-      formData.append('no_watermark', '1');
-      formData.append('is_platform', 'web');
+      const payload = {
+        id: id as string,
+        assets: selectedUploadAssets,
+        enable_watermark: '0',
+        no_watermark: '1',
+        is_platform: 'app'
+      };
+      console.log('Upload Payload:', payload);
 
-      const res = await uploadPhotosMutation({ id: id as string, body: formData }).unwrap();
+      const res = await uploadPhotosMutation(payload).unwrap();
+      console.log('Upload Response:', res);
+
       if (res.success) {
         setSelectedUploadAssets([]);
         setShowUploadModal(false);
@@ -66,16 +66,16 @@ export default function ParticipantEventGallery() {
     }
   };
 
-  const { data: photosRes, isLoading: loadingPhotos, refetch: refetchPhotos } = useGetGroupPhotosQuery({ 
-    id: id as string, 
-    params: { sortBy: 'created_at', sortOrder: 'desc', limit: 50 } 
+  const { data: photosRes, isLoading: loadingPhotos, refetch: refetchPhotos } = useGetGroupPhotosQuery({
+    id: id as string,
+    params: { sortBy: 'created_at', sortOrder: 'desc', limit: 50 }
   });
   const PHOTOS = photosRes?.data?.photos || [];
   const VIDEOS = PHOTOS.filter((p: any) => p.format === 'mp4' || p.format === 'mov');
 
   const { data: participantsData, isLoading: isLoadingParticipants, refetch: refetchParticipants } = useGetGroupParticipantsMatchedQuery(id as string, { skip: activeTab !== 'participants' });
   const participants = participantsData?.data || [];
-  
+
   const { data: photoDeleteRes, isLoading: loadingPhotoDelete, refetch: refetchPhotoDelete } = useGetGroupPhotoDeleteRequestsQuery(
     { id: id as string, params: { status: 'pending', page: 1, limit: 20 } },
     { skip: activeTab !== 'delete' }
@@ -108,15 +108,15 @@ export default function ParticipantEventGallery() {
   const toggleSelection = (id: string) => {
     setSelectedPhotos(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]);
   };
-  
+
   const handleSelectAll = () => {
     setSelectedPhotos(PHOTOS.map(p => p.id));
   };
-  
+
   const renderPhotoItem = ({ item, isVideo = false }: any) => {
     const isSelected = selectedPhotos.includes(item.id);
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={{ flex: 1 / 3, padding: 1, position: 'relative' }}
         onPress={() => {
           if (isSelecting) {
@@ -128,7 +128,7 @@ export default function ParticipantEventGallery() {
         }}
       >
         <Image source={{ uri: item.url }} style={{ width: '100%', aspectRatio: 1, backgroundColor: '#eee' }} />
-        
+
         {isVideo && (
           <View style={styles.videoPlayOverlay}><PlayCircle color="#fff" size={24} /></View>
         )}
@@ -154,7 +154,7 @@ export default function ParticipantEventGallery() {
       </TouchableOpacity>
     );
   };
-  
+
   const scrollY = useRef(new Animated.Value(0)).current;
   const headerOpacity = scrollY.interpolate({
     inputRange: [150, 200],
@@ -171,101 +171,101 @@ export default function ParticipantEventGallery() {
         <Text style={styles.floatingTitle}>Priya & Rahul</Text>
       </Animated.View>
 
-      <Animated.ScrollView 
+      <Animated.ScrollView
         style={{ flex: 1 }}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
         scrollEventThrottle={16}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF6B00" />}
       >
-      {/* Immersive Cover */}
-      <ImageBackground
-        source={{ uri: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80' }}
-        style={[styles.cover, { paddingTop: insets.top }]}
-      >
-        <View style={styles.overlay} />
+        {/* Immersive Cover */}
+        <ImageBackground
+          source={{ uri: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80' }}
+          style={[styles.cover, { paddingTop: insets.top }]}
+        >
+          <View style={styles.overlay} />
 
-        <View style={styles.headerTop}>
-          <TouchableOpacity style={styles.iconBtnBlur} onPress={() => router.back()}>
-            <ChevronLeft color="#fff" size={24} />
+          <View style={styles.headerTop}>
+            <TouchableOpacity style={styles.iconBtnBlur} onPress={() => router.back()}>
+              <ChevronLeft color="#fff" size={24} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.headerBottom}>
+            <Text style={styles.eventTitle}>Priya & Rahul</Text>
+            <Text style={styles.eventSubtitle}>24 Oct 2026 • {PHOTOS.length} Photos</Text>
+          </View>
+        </ImageBackground>
+
+        {/* Main Action Bar (Select, Share, Settings, Chat) */}
+        <View style={styles.iconActionBar}>
+          <TouchableOpacity style={styles.actionItem} onPress={() => { setIsSelecting(!isSelecting); setSelectedPhotos([]); }}>
+            <View style={[styles.actionCircle, isSelecting && { backgroundColor: '#333', borderColor: '#333' }]}><CheckSquare color={isSelecting ? "#fff" : "#111"} size={22} /></View>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem} onPress={() => setShowDownloadConfirmModal(true)}>
+            <View style={styles.actionCircle}><Download color="#111" size={22} /></View>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem} onPress={() => setShowShareModal(true)}>
+            <View style={styles.actionCircle}><Share2 color="#111" size={22} /></View>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem} onPress={() => router.push(`/(participant)/event/${id}/chat`)}>
+            <View style={styles.actionCircle}><MessageCircle color="#111" size={22} /></View>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionItem} onPress={() => router.push(`/(participant)/event/${id}/settings`)}>
+            <View style={styles.actionCircle}><Settings color="#111" size={22} /></View>
           </TouchableOpacity>
         </View>
 
-        <View style={styles.headerBottom}>
-          <Text style={styles.eventTitle}>Priya & Rahul</Text>
-          <Text style={styles.eventSubtitle}>24 Oct 2026 • {PHOTOS.length} Photos</Text>
+        {/* Scrollable Tabs */}
+        <View style={styles.tabWrapper}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabContainer}>
+            <TouchableOpacity style={[styles.tab, activeTab === 'all' && styles.activeTab]} onPress={() => setActiveTab('all')}>
+              <LayoutGrid color={activeTab === 'all' ? "#fff" : "#666"} size={16} />
+              <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>All Photos</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.tab, activeTab === 'my-photos' && styles.activeTab]} onPress={() => setActiveTab('my-photos')}>
+              <ImageIcon color={activeTab === 'my-photos' ? "#fff" : "#666"} size={16} />
+              <Text style={[styles.tabText, activeTab === 'my-photos' && styles.activeTabText]}>My Photos</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.tab, activeTab === 'participants' && styles.activeTab]} onPress={() => setActiveTab('participants')}>
+              <Users color={activeTab === 'participants' ? "#fff" : "#666"} size={16} />
+              <Text style={[styles.tabText, activeTab === 'participants' && styles.activeTabText]}>Participants</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.tab, activeTab === 'videos' && styles.activeTab]} onPress={() => setActiveTab('videos')}>
+              <Video color={activeTab === 'videos' ? "#fff" : "#666"} size={16} />
+              <Text style={[styles.tabText, activeTab === 'videos' && styles.activeTabText]}>Videos</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.tab, activeTab === 'delete' && styles.activeTab]} onPress={() => setActiveTab('delete')}>
+              <Trash2 color={activeTab === 'delete' ? "#fff" : "#666"} size={16} />
+              <Text style={[styles.tabText, activeTab === 'delete' && styles.activeTabText]}>Delete Requests</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
-      </ImageBackground>
 
-      {/* Main Action Bar (Select, Share, Settings, Chat) */}
-      <View style={styles.iconActionBar}>
-        <TouchableOpacity style={styles.actionItem} onPress={() => { setIsSelecting(!isSelecting); setSelectedPhotos([]); }}>
-          <View style={[styles.actionCircle, isSelecting && { backgroundColor: '#333', borderColor: '#333' }]}><CheckSquare color={isSelecting ? "#fff" : "#111"} size={22} /></View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionItem} onPress={() => setShowDownloadConfirmModal(true)}>
-          <View style={styles.actionCircle}><Download color="#111" size={22} /></View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionItem} onPress={() => setShowShareModal(true)}>
-          <View style={styles.actionCircle}><Share2 color="#111" size={22} /></View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionItem} onPress={() => router.push(`/(participant)/event/${id}/chat`)}>
-          <View style={styles.actionCircle}><MessageCircle color="#111" size={22} /></View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionItem} onPress={() => router.push(`/(participant)/event/${id}/settings`)}>
-          <View style={styles.actionCircle}><Settings color="#111" size={22} /></View>
-        </TouchableOpacity>
-      </View>
+        {/* Grid Content */}
+        <View style={styles.content}>
+          {activeTab === 'all' && (
+            PHOTOS.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/7389/7389146.png' }} style={styles.emptyIcon} />
+                <Text style={styles.emptyTitle}>No photos yet</Text>
+                <Text style={styles.emptySub}>Tap Upload to start sharing moments.</Text>
+                <TouchableOpacity style={styles.uploadBtn} onPress={() => setShowUploadModal(true)}>
+                  <UploadCloud color="#fff" size={20} />
+                  <Text style={styles.uploadText}>Upload Photos</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <FlatList
+                data={PHOTOS}
+                numColumns={3}
+                scrollEnabled={false}
+                keyExtractor={(item) => item.id}
+                renderItem={(props) => renderPhotoItem(props)}
+              />
+            )
+          )}
 
-      {/* Scrollable Tabs */}
-      <View style={styles.tabWrapper}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabContainer}>
-          <TouchableOpacity style={[styles.tab, activeTab === 'all' && styles.activeTab]} onPress={() => setActiveTab('all')}>
-            <LayoutGrid color={activeTab === 'all' ? "#fff" : "#666"} size={16} />
-            <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>All Photos</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.tab, activeTab === 'my-photos' && styles.activeTab]} onPress={() => setActiveTab('my-photos')}>
-            <ImageIcon color={activeTab === 'my-photos' ? "#fff" : "#666"} size={16} />
-            <Text style={[styles.tabText, activeTab === 'my-photos' && styles.activeTabText]}>My Photos</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.tab, activeTab === 'participants' && styles.activeTab]} onPress={() => setActiveTab('participants')}>
-            <Users color={activeTab === 'participants' ? "#fff" : "#666"} size={16} />
-            <Text style={[styles.tabText, activeTab === 'participants' && styles.activeTabText]}>Participants</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.tab, activeTab === 'videos' && styles.activeTab]} onPress={() => setActiveTab('videos')}>
-            <Video color={activeTab === 'videos' ? "#fff" : "#666"} size={16} />
-            <Text style={[styles.tabText, activeTab === 'videos' && styles.activeTabText]}>Videos</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.tab, activeTab === 'delete' && styles.activeTab]} onPress={() => setActiveTab('delete')}>
-            <Trash2 color={activeTab === 'delete' ? "#fff" : "#666"} size={16} />
-            <Text style={[styles.tabText, activeTab === 'delete' && styles.activeTabText]}>Delete Requests</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-
-      {/* Grid Content */}
-      <View style={styles.content}>
-        {activeTab === 'all' && (
-          PHOTOS.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Image source={{ uri: 'https://cdn-icons-png.flaticon.com/512/7389/7389146.png' }} style={styles.emptyIcon} />
-              <Text style={styles.emptyTitle}>No photos yet</Text>
-              <Text style={styles.emptySub}>Tap Upload to start sharing moments.</Text>
-              <TouchableOpacity style={styles.uploadBtn} onPress={() => setShowUploadModal(true)}>
-                <UploadCloud color="#fff" size={20} />
-                <Text style={styles.uploadText}>Upload Photos</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <FlatList
-              data={PHOTOS}
-              numColumns={3}
-              scrollEnabled={false}
-              keyExtractor={(item) => item.id}
-              renderItem={(props) => renderPhotoItem(props)}
-            />
-          )
-        )}
-        
-        {activeTab === 'my-photos' && (
+          {activeTab === 'my-photos' && (
             <FlatList
               data={PHOTOS}
               numColumns={3}
@@ -273,35 +273,35 @@ export default function ParticipantEventGallery() {
               keyExtractor={(item) => item.id.toString()}
               renderItem={renderPhotoItem}
             />
-        )}
+          )}
 
-        {activeTab === 'participants' && (
-          <FlatList
-            data={participants}
-            keyExtractor={(item: any) => item.id.toString()}
-            scrollEnabled={false}
-            renderItem={({item}) => (
-              <View style={styles.participantItem}>
-                <View style={styles.avatarWrap}>
-                  {item.avatar ? (
-                    <Image source={{ uri: item.avatar }} style={{ width: '100%', height: '100%', borderRadius: 20 }} />
-                  ) : (
-                    <Users color="#fff" size={20}/>
-                  )}
+          {activeTab === 'participants' && (
+            <FlatList
+              data={participants}
+              keyExtractor={(item: any) => item.id.toString()}
+              scrollEnabled={false}
+              renderItem={({ item }) => (
+                <View style={styles.participantItem}>
+                  <View style={styles.avatarWrap}>
+                    {item.avatar ? (
+                      <Image source={{ uri: item.avatar }} style={{ width: '100%', height: '100%', borderRadius: 20 }} />
+                    ) : (
+                      <Users color="#fff" size={20} />
+                    )}
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 15 }}>
+                    <Text style={styles.participantName}>{item.name}</Text>
+                    <Text style={styles.participantRole}>Matches: {item.matched_photos_count || 0}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.participantBtn}><Text style={styles.participantBtnText}>Remove</Text></TouchableOpacity>
                 </View>
-                <View style={{flex: 1, marginLeft: 15}}>
-                  <Text style={styles.participantName}>{item.name}</Text>
-                  <Text style={styles.participantRole}>Matches: {item.matched_photos_count || 0}</Text>
-                </View>
-                <TouchableOpacity style={styles.participantBtn}><Text style={styles.participantBtnText}>Remove</Text></TouchableOpacity>
-              </View>
-            )}
-            contentContainerStyle={{padding: 20}}
-            ListEmptyComponent={isLoadingParticipants ? <ActivityIndicator size="large" color="#FF6B00" /> : <Text style={{textAlign: 'center', marginTop: 20}}>No participants found.</Text>}
-          />
-        )}
+              )}
+              contentContainerStyle={{ padding: 20 }}
+              ListEmptyComponent={isLoadingParticipants ? <ActivityIndicator size="large" color="#FF6B00" /> : <Text style={{ textAlign: 'center', marginTop: 20 }}>No participants found.</Text>}
+            />
+          )}
 
-        {activeTab === 'videos' && (
+          {activeTab === 'videos' && (
             <FlatList
               data={VIDEOS}
               numColumns={3}
@@ -309,42 +309,42 @@ export default function ParticipantEventGallery() {
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => renderPhotoItem({ item, isVideo: true })}
             />
-        )}
+          )}
 
-        {activeTab === 'delete' && (
-          isLoadingDelete ? (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 50 }}>
-              <ActivityIndicator size="large" color="#FF6B00" />
-            </View>
-          ) : deleteRequests.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Trash2 color="#ccc" size={60} style={{marginBottom: 20}} />
-              <Text style={styles.emptyTitle}>No Delete Requests</Text>
-              <Text style={styles.emptySub}>You have no pending requests.</Text>
-            </View>
-          ) : (
-            <FlatList
-              data={deleteRequests}
-              keyExtractor={(item: any, index) => item?.id?.toString() || index.toString()}
-              scrollEnabled={false}
-              renderItem={({item}) => (
-                <View style={[styles.participantItem, { justifyContent: 'space-between' }]}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Image 
-                      source={{ uri: item?.photo?.thumbnail_url || item?.video?.thumbnail_url || 'https://via.placeholder.com/50' }} 
-                      style={{ width: 50, height: 50, borderRadius: 8, backgroundColor: '#eee' }} 
-                    />
-                    <View style={{ marginLeft: 15 }}>
-                      <Text style={{ fontSize: 16, fontWeight: '600' }}>Request #{item?.id}</Text>
-                      <Text style={{ fontSize: 13, color: '#FF3B30', marginTop: 4 }}>Pending Review</Text>
+          {activeTab === 'delete' && (
+            isLoadingDelete ? (
+              <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 50 }}>
+                <ActivityIndicator size="large" color="#FF6B00" />
+              </View>
+            ) : deleteRequests.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Trash2 color="#ccc" size={60} style={{ marginBottom: 20 }} />
+                <Text style={styles.emptyTitle}>No Delete Requests</Text>
+                <Text style={styles.emptySub}>You have no pending requests.</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={deleteRequests}
+                keyExtractor={(item: any, index) => item?.id?.toString() || index.toString()}
+                scrollEnabled={false}
+                renderItem={({ item }) => (
+                  <View style={[styles.participantItem, { justifyContent: 'space-between' }]}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Image
+                        source={{ uri: item?.photo?.thumbnail_url || item?.video?.thumbnail_url || 'https://via.placeholder.com/50' }}
+                        style={{ width: 50, height: 50, borderRadius: 8, backgroundColor: '#eee' }}
+                      />
+                      <View style={{ marginLeft: 15 }}>
+                        <Text style={{ fontSize: 16, fontWeight: '600' }}>Request #{item?.id}</Text>
+                        <Text style={{ fontSize: 13, color: '#FF3B30', marginTop: 4 }}>Pending Review</Text>
+                      </View>
                     </View>
                   </View>
-                </View>
-              )}
-            />
-          )
-        )}
-      </View>
+                )}
+              />
+            )
+          )}
+        </View>
       </Animated.ScrollView>
 
       {/* Floating Bottom Selection Bar */}
@@ -483,7 +483,7 @@ export default function ParticipantEventGallery() {
             </View>
             <Text style={styles.confirmTitle}>Download Event</Text>
             <Text style={styles.confirmSub}>Are you sure you want to download all available photos and videos from this event?</Text>
-            
+
             <View style={styles.confirmBtnRow}>
               <TouchableOpacity style={styles.confirmCancelBtn} onPress={() => setShowDownloadConfirmModal(false)}>
                 <Text style={styles.confirmCancelText}>Cancel</Text>
@@ -512,10 +512,10 @@ export default function ParticipantEventGallery() {
             </View>
           </View>
           {previewIndex !== null && (
-            <Image 
-              source={{ uri: PHOTOS[previewIndex].url }} 
-              style={styles.lightboxImage} 
-              resizeMode="contain" 
+            <Image
+              source={{ uri: PHOTOS[previewIndex].url }}
+              style={styles.lightboxImage}
+              resizeMode="contain"
             />
           )}
           {previewIndex !== null && previewIndex > 0 && (
@@ -592,7 +592,7 @@ export default function ParticipantEventGallery() {
                     {selectedUploadAssets.map((asset, index) => (
                       <View key={index} style={{ marginRight: 15, position: 'relative', marginTop: 10 }}>
                         <Image source={{ uri: asset.uri }} style={{ width: 80, height: 80, borderRadius: 12, borderWidth: 1, borderColor: '#EEE' }} />
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={{ position: 'absolute', top: -8, right: -8, backgroundColor: '#FF3B30', borderRadius: 12, padding: 4, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 3 }}
                           onPress={() => setSelectedUploadAssets(prev => prev.filter((_, i) => i !== index))}
                         >
@@ -621,8 +621,8 @@ export default function ParticipantEventGallery() {
                     <ImageIcon color="#111" size={16} style={{ marginRight: 6 }} />
                     <Text style={styles.uploadAddText}>Add More</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.uploadSubmitBtn, (selectedUploadAssets.length === 0 || isUploading) && { opacity: 0.5 }]} 
+                  <TouchableOpacity
+                    style={[styles.uploadSubmitBtn, (selectedUploadAssets.length === 0 || isUploading) && { opacity: 0.5 }]}
                     onPress={handleUpload}
                     disabled={selectedUploadAssets.length === 0 || isUploading}
                   >
@@ -683,7 +683,7 @@ const styles = StyleSheet.create({
   activeTabText: { color: '#fff' },
 
   content: { flex: 1, backgroundColor: '#fff', minHeight: Dimensions.get('window').height },
-  
+
   floatingHeader: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', paddingBottom: 15, zIndex: 100, borderBottomWidth: 1, borderBottomColor: '#E5E5EA' },
   floatingBackBtn: { paddingHorizontal: 15 },
   floatingTitle: { fontSize: 18, fontWeight: 'bold', color: '#111' },
@@ -691,8 +691,8 @@ const styles = StyleSheet.create({
   emptyIcon: { width: 80, height: 80, opacity: 0.3, marginBottom: 20 },
   emptyTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', marginBottom: 8 },
   emptySub: { fontSize: 15, color: '#8E8E93', textAlign: 'center', marginBottom: 20 },
-  
-  participantItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, backgroundColor: '#fff', padding: 15, borderRadius: 12, shadowColor: '#000', shadowOffset: {width:0, height:2}, shadowOpacity: 0.05, shadowRadius: 5, elevation: 1, borderWidth: 1, borderColor: '#F2F2F7' },
+
+  participantItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, backgroundColor: '#fff', padding: 15, borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 1, borderWidth: 1, borderColor: '#F2F2F7' },
   avatarWrap: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#FF6B00', alignItems: 'center', justifyContent: 'center' },
   participantName: { fontSize: 16, fontWeight: 'bold', color: '#111' },
   participantRole: { fontSize: 13, color: '#666', marginTop: 2 },
@@ -700,7 +700,7 @@ const styles = StyleSheet.create({
 
   photoActionsRow: { position: 'absolute', top: 6, left: 6, flexDirection: 'row', zIndex: 10 },
   photoActionMicroBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', marginLeft: 4 },
-  
+
   checkboxOverlay: { position: 'absolute', top: 6, right: 6, zIndex: 10 },
   checkboxOverlayActive: {},
   checkbox: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#fff', backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3, elevation: 2 },
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
 
   /* Modal Styles */
   modalOverlayCenter: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  confirmModalCard: { backgroundColor: '#fff', borderRadius: 24, padding: 25, width: '100%', maxWidth: 340, alignItems: 'center', shadowColor: '#000', shadowOffset: {width:0,height:10}, shadowOpacity: 0.15, shadowRadius: 20, elevation: 10 },
+  confirmModalCard: { backgroundColor: '#fff', borderRadius: 24, padding: 25, width: '100%', maxWidth: 340, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 10 },
   confirmIconWrap: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#FFF5F0', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
   confirmTitle: { fontSize: 20, fontWeight: 'bold', color: '#111', marginBottom: 8 },
   confirmSub: { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 20, marginBottom: 25 },

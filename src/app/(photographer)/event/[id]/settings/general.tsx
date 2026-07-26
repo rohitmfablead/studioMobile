@@ -1,19 +1,69 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Switch } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Switch, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ChevronLeft, Folder, Users, Calendar, Image as ImageIcon, Globe, Lock, CheckCircle2, Droplet, ArrowDownUp } from 'lucide-react-native';
+import { useGetGroupDetailsQuery, useUpdateGroupDetailsMutation } from '../../../../../store/apiSlice';
 
 export default function GeneralSettings() {
   const { id } = useLocalSearchParams();
-  const [groupName, setGroupName] = useState('sss');
-  const [eventType, setEventType] = useState('Wedding');
+  const { data, isLoading, refetch } = useGetGroupDetailsQuery(id as string);
+  const [updateGroupDetails, { isLoading: isUpdating }] = useUpdateGroupDetailsMutation();
+
+  const [groupName, setGroupName] = useState('');
+  const [eventType, setEventType] = useState('');
   const [eventDate, setEventDate] = useState('');
   const [description, setDescription] = useState('');
   
   const [visibility, setVisibility] = useState('Public');
   const [sortOrder, setSortOrder] = useState('Newest');
   const [watermark, setWatermark] = useState(false);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [photoCount, setPhotoCount] = useState(0);
+  const [participantCount, setParticipantCount] = useState(0);
+  
+  const [toastMsg, setToastMsg] = useState('');
+
+  useEffect(() => {
+    if (data?.success && data?.group) {
+      const g = data.group;
+      setGroupName(g.name || '');
+      setEventType(g.eventType || '');
+      setEventDate(g.eventDate || '');
+      setDescription(g.description || '');
+      setVisibility(g.type === 'private' ? 'Private' : 'Public');
+      setSortOrder(g.sortBy === 'oldest' ? 'Oldest' : 'Newest');
+      setWatermark(g.enableWatermark || false);
+      setCoverImage(g.coverImage || null);
+      setPhotoCount(g.photoCount || 0);
+      setParticipantCount(g.memberCount || 0);
+    }
+  }, [data]);
+
+  const handleSave = async () => {
+    try {
+      const payload = {
+        name: groupName,
+        type: visibility === 'Private' ? 'private' : 'public',
+        eventType: eventType,
+        eventDate: eventDate,
+        description: description,
+        coverImage: coverImage,
+        enableWatermark: watermark,
+        sortBy: sortOrder === 'Oldest' ? 'oldest' : 'newest',
+      };
+      const res = await updateGroupDetails({ id: id as string, body: payload }).unwrap();
+      if (res.success) {
+        setToastMsg('Settings updated successfully!');
+        setTimeout(() => setToastMsg(''), 3000);
+        refetch();
+      }
+    } catch (err) {
+      console.error('Update failed:', err);
+      setToastMsg('Failed to update settings!');
+      setTimeout(() => setToastMsg(''), 3000);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -28,43 +78,59 @@ export default function GeneralSettings() {
             <Text style={styles.headerSubtitle}>Manage your group's basic information</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.saveBtn}>
-          <Text style={styles.saveBtnText}>Save</Text>
+        <TouchableOpacity style={[styles.saveBtn, isUpdating && { opacity: 0.6 }]} onPress={handleSave} disabled={isUpdating}>
+          {isUpdating ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.saveBtnText}>Save</Text>
+          )}
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 50 }}>
-        {/* Metric Cards */}
-        <View style={styles.metricsRow}>
-          <View style={[styles.metricCard, { backgroundColor: '#FFF9F2' }]}>
-            <View style={[styles.iconBox, { backgroundColor: '#FFEDD5' }]}>
-              <Folder color="#FF6B00" size={16} />
-            </View>
-            <View>
-              <Text style={styles.metricVal}>0</Text>
-              <Text style={styles.metricLabel}>Total Photos</Text>
-            </View>
+        {isLoading ? (
+          <View style={{ padding: 20, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#FF6B00" />
           </View>
-          <View style={[styles.metricCard, { backgroundColor: '#F0F5FF' }]}>
-            <View style={[styles.iconBox, { backgroundColor: '#DBEAFE' }]}>
-              <Users color="#3B82F6" size={16} />
+        ) : (
+          <>
+            {/* Metric Cards */}
+            <View style={styles.metricsRow}>
+              <View style={[styles.metricCard, { backgroundColor: '#FFF9F2' }]}>
+                <View style={[styles.iconBox, { backgroundColor: '#FFEDD5' }]}>
+                  <Folder color="#FF6B00" size={16} />
+                </View>
+                <View>
+                  <Text style={styles.metricVal}>{photoCount}</Text>
+                  <Text style={styles.metricLabel}>Total Photos</Text>
+                </View>
+              </View>
+              <View style={[styles.metricCard, { backgroundColor: '#F0F5FF' }]}>
+                <View style={[styles.iconBox, { backgroundColor: '#DBEAFE' }]}>
+                  <Users color="#3B82F6" size={16} />
+                </View>
+                <View>
+                  <Text style={styles.metricVal}>{participantCount}</Text>
+                  <Text style={styles.metricLabel}>Participants</Text>
+                </View>
+              </View>
             </View>
-            <View>
-              <Text style={styles.metricVal}>1</Text>
-              <Text style={styles.metricLabel}>Participants</Text>
-            </View>
-          </View>
-        </View>
 
-        {/* Cover Image */}
-        <Text style={styles.sectionTitle}>
-          <ImageIcon color="#FF6B00" size={16} style={{marginRight: 6}} /> Cover Image
-        </Text>
-        <TouchableOpacity style={styles.uploadBox}>
-          <ImageIcon color="#C7C7CC" size={32} />
-          <Text style={styles.uploadText}>No cover image</Text>
-          <Text style={styles.uploadSub}>Recommended: 1920x600px · Max 5MB · Click to change</Text>
-        </TouchableOpacity>
+            {/* Cover Image */}
+            <Text style={styles.sectionTitle}>
+              <ImageIcon color="#FF6B00" size={16} style={{marginRight: 6}} /> Cover Image
+            </Text>
+            <TouchableOpacity style={[styles.uploadBox, coverImage ? { padding: 0, overflow: 'hidden' } : {}]}>
+              {coverImage ? (
+                <Image source={{ uri: coverImage }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+              ) : (
+                <>
+                  <ImageIcon color="#C7C7CC" size={32} />
+                  <Text style={styles.uploadText}>No cover image</Text>
+                  <Text style={styles.uploadSub}>Recommended: 1920x600px · Max 5MB · Click to change</Text>
+                </>
+              )}
+            </TouchableOpacity>
 
         {/* Form Inputs */}
         <Text style={styles.inputLabel}>Group Name</Text>
@@ -132,7 +198,19 @@ export default function GeneralSettings() {
           </View>
           <Switch value={watermark} onValueChange={setWatermark} trackColor={{ false: '#E5E5EA', true: '#FF6B00' }} />
         </View>
+          </>
+        )}
       </ScrollView>
+
+      {/* Custom Toast Notification */}
+      {toastMsg ? (
+        <View style={styles.toastContainer}>
+          <View style={styles.toast}>
+            <CheckCircle2 color="#fff" size={18} />
+            <Text style={styles.toastText}>{toastMsg}</Text>
+          </View>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -185,4 +263,8 @@ const styles = StyleSheet.create({
   switchLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   switchTitle: { fontSize: 14, fontWeight: '600', color: '#111', marginBottom: 2 },
   switchSub: { fontSize: 11, color: '#666' },
+
+  toastContainer: { position: 'absolute', bottom: 40, left: 0, right: 0, alignItems: 'center', zIndex: 999 },
+  toast: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#333', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 25, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 5, elevation: 6 },
+  toastText: { color: '#fff', fontSize: 14, fontWeight: '500', marginLeft: 10 },
 });

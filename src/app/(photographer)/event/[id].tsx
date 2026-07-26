@@ -1,10 +1,10 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Check, CheckSquare, ChevronDown, ChevronLeft, ChevronRight, Copy, Download, FolderOpen, Heart, Image as ImageIcon, LayoutGrid, Link as LinkIcon, MessageCircle, PlayCircle, Plus, QrCode, Settings, Share2, Trash2, Upload, UploadCloud, Users, Video, X } from 'lucide-react-native';
-import { useCallback, useRef, useState } from 'react';
+import { Check, CheckSquare, ChevronDown, ChevronLeft, ChevronRight, Copy, Download, FolderOpen, Heart, Image as ImageIcon, LayoutGrid, Link as LinkIcon, MessageCircle, PlayCircle, Plus, QrCode, ScanFace, Settings, Share2, Trash2, Upload, UploadCloud, Users, Video, X } from 'lucide-react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Dimensions, FlatList, Image, ImageBackground, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Photo, useGetGroupDetailsQuery, useGetGroupParticipantsMatchedQuery, useGetGroupPhotoDeleteRequestsQuery, useGetGroupPhotosQuery, useGetGroupVideoDeleteRequestsQuery, useUploadPhotosMutation } from '../../../store/apiSlice';
+import { Photo, useGetGroupDetailsQuery, useGetGroupParticipantsMatchedQuery, useGetGroupPhotoDeleteRequestsQuery, useGetGroupPhotosQuery, useGetGroupVideoDeleteRequestsQuery, useUploadPhotosMutation, useGetGroupFoldersQuery, useMatchMyPhotosMutation } from '../../../store/apiSlice';
 
 const { width } = Dimensions.get('window');
 
@@ -19,6 +19,39 @@ export default function PhotographerEventGallery() {
   });
   const PHOTOS = photosData?.data?.photos || [];
   const VIDEOS = PHOTOS.filter((p: any) => p.format === 'mp4' || p.format === 'mov');
+
+  const [activeTab, setActiveTab] = useState('all');
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState<number[]>([]);
+  const [showDownloadConfirmModal, setShowDownloadConfirmModal] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [matchMessage, setMatchMessage] = useState('');
+  const [matchedPhotos, setMatchedPhotos] = useState<any[]>([]);
+
+  const { data: foldersData, error: foldersError, isLoading: isLoadingFolders } = useGetGroupFoldersQuery(id as string);
+  const folders = foldersData?.data || [];
+
+  const [matchMyPhotos, { isLoading: isMatching }] = useMatchMyPhotosMutation();
+
+  const [hasFetchedMyPhotos, setHasFetchedMyPhotos] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'my-photos' && !hasFetchedMyPhotos && !isMatching) {
+      setHasFetchedMyPhotos(true);
+      matchMyPhotos(id as string).unwrap().then(res => {
+        setMatchMessage(res.message || 'Face matched successfully');
+        if (res.photos) {
+          setMatchedPhotos(res.photos);
+        }
+      }).catch(e => {
+        setMatchMessage('Failed to match photos');
+      });
+    }
+  }, [activeTab, hasFetchedMyPhotos]);
 
   const { data: participantsData, isLoading: isLoadingParticipants, refetch: refetchParticipants } = useGetGroupParticipantsMatchedQuery(id as string, { skip: activeTab !== 'participants' });
   const participants = participantsData?.data || [];
@@ -37,18 +70,8 @@ export default function PhotographerEventGallery() {
 
   const isLoading = isDetailsLoading || isPhotosLoading;
 
-  const insets = useSafeAreaInsets();
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [showQrModal, setShowQrModal] = useState(false);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('all');
-  const [selectedPhotos, setSelectedPhotos] = useState<number[]>([]);
-  const [showDownloadConfirmModal, setShowDownloadConfirmModal] = useState(false);
-  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-
   const [uploadPhotosMutation] = useUploadPhotosMutation();
+  const insets = useSafeAreaInsets();
   const [selectedUploadAssets, setSelectedUploadAssets] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -67,19 +90,13 @@ export default function PhotographerEventGallery() {
     if (selectedUploadAssets.length === 0) return;
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      selectedUploadAssets.forEach((asset, index) => {
-        formData.append('photos[]', {
-          uri: asset.uri,
-          name: asset.fileName || `photo_${index}.jpg`,
-          type: asset.mimeType || 'image/jpeg',
-        } as any);
-      });
-      formData.append('enable_watermark', '0');
-      formData.append('no_watermark', '1');
-      formData.append('is_platform', 'mobile');
-
-      const res = await uploadPhotosMutation({ id: id as string, body: formData }).unwrap();
+      const res = await uploadPhotosMutation({ 
+        id: id as string, 
+        assets: selectedUploadAssets,
+        enable_watermark: '0',
+        no_watermark: '1',
+        is_platform: 'mobile'
+      }).unwrap();
       if (res.success) {
         setSelectedUploadAssets([]);
         setShowUploadModal(false);
@@ -252,10 +269,21 @@ export default function PhotographerEventGallery() {
                   <ImageIcon color={activeTab === 'my-photos' ? "#fff" : "#666"} size={16} />
                   <Text style={[styles.tabText, activeTab === 'my-photos' && styles.activeTabText]}>My Photos</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.tab, activeTab === 'participants' && styles.activeTab]} onPress={() => setActiveTab('participants')}>
+                  <TouchableOpacity style={[styles.tab, activeTab === 'participants' && styles.activeTab]} onPress={() => setActiveTab('participants')}>
                   <Users color={activeTab === 'participants' ? "#fff" : "#666"} size={16} />
                   <Text style={[styles.tabText, activeTab === 'participants' && styles.activeTabText]}>Participants</Text>
                 </TouchableOpacity>
+                {foldersError && (
+                  <View style={[styles.tab, { backgroundColor: '#FFE4E6' }]}>
+                    <Text style={{ color: '#E11D48', fontSize: 12 }}>Folder Auth Error (401)</Text>
+                  </View>
+                )}
+                {folders.map((folder: any) => (
+                  <TouchableOpacity key={folder.id} style={[styles.tab, activeTab === `folder_${folder.id}` && styles.activeTab]} onPress={() => setActiveTab(`folder_${folder.id}`)}>
+                    <FolderOpen color={activeTab === `folder_${folder.id}` ? "#fff" : "#666"} size={16} />
+                    <Text style={[styles.tabText, activeTab === `folder_${folder.id}` && styles.activeTabText]}>{folder.name}</Text>
+                  </TouchableOpacity>
+                ))}
                 <TouchableOpacity style={[styles.tab, activeTab === 'videos' && styles.activeTab]} onPress={() => setActiveTab('videos')}>
                   <Video color={activeTab === 'videos' ? "#fff" : "#666"} size={16} />
                   <Text style={[styles.tabText, activeTab === 'videos' && styles.activeTabText]}>Videos</Text>
@@ -292,13 +320,38 @@ export default function PhotographerEventGallery() {
               )}
 
               {activeTab === 'my-photos' && (
-                <FlatList
-                  data={PHOTOS.slice(0, 5)}
-                  numColumns={3}
-                  scrollEnabled={false}
-                  keyExtractor={(item) => item.id.toString()}
-                  renderItem={(props) => renderPhotoItem(props)}
-                />
+                <View style={{ flex: 1 }}>
+                  <View style={{ padding: 20, alignItems: 'center' }}>
+                    <TouchableOpacity 
+                      style={[styles.uploadBtn, { backgroundColor: '#FF6B00' }]} 
+                      onPress={async () => {
+                        try {
+                          const res = await matchMyPhotos(id as string).unwrap();
+                          setMatchMessage(res.message || 'Face matched successfully');
+                          if (res.photos) {
+                            setMatchedPhotos(res.photos);
+                          }
+                        } catch(e) {
+                          setMatchMessage('Failed to match photos');
+                        }
+                      }}
+                      disabled={isMatching}
+                    >
+                      <ScanFace color="#fff" size={20} />
+                      {isMatching ? <ActivityIndicator color="#fff" style={{ marginLeft: 8 }} /> : <Text style={styles.uploadText}>Match My Photos</Text>}
+                    </TouchableOpacity>
+                    {matchMessage ? <Text style={{ marginTop: 15, textAlign: 'center', color: '#111', fontWeight: 'bold' }}>{matchMessage}</Text> : null}
+                  </View>
+                  {matchedPhotos.length > 0 ? (
+                    <FlatList
+                      data={matchedPhotos}
+                      numColumns={3}
+                      scrollEnabled={false}
+                      keyExtractor={(item) => item.id.toString()}
+                      renderItem={(props) => renderPhotoItem(props)}
+                    />
+                  ) : null}
+                </View>
               )}
 
               {activeTab === 'participants' && (
@@ -369,6 +422,14 @@ export default function PhotographerEventGallery() {
                     )}
                   />
                 )
+              )}
+
+              {activeTab.startsWith('folder_') && (
+                <View style={styles.emptyState}>
+                  <FolderOpen color="#ccc" size={60} style={{ marginBottom: 20 }} />
+                  <Text style={styles.emptyTitle}>Folder Empty</Text>
+                  <Text style={styles.emptySub}>This folder does not have any photos yet.</Text>
+                </View>
               )}
             </View>
           </Animated.ScrollView>

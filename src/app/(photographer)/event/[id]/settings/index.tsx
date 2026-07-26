@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ImageBackground }
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ChevronLeft, ChevronRight, Settings as SettingsIcon, User, Lock, Folder, Download, BookOpen, Star, LogOut, Trash2 } from 'lucide-react-native';
+import { useDeleteGroupMutation } from '../../../../../store/apiSlice';
+import { Platform, Alert, ActivityIndicator } from 'react-native';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -19,6 +21,33 @@ export default function SettingsScreen() {
     { icon: <Star color="#666" size={22} />, label: 'Branding & Sponsors', type: 'nav', onPress: () => router.push(`/(photographer)/event/${id}/settings/branding`) },
     { icon: <Star color="#666" size={22} />, label: 'Client Favorite', type: 'nav', onPress: () => router.push(`/(photographer)/event/${id}/settings/favorite`) },
   ];
+
+  const [deleteGroup, { isLoading: isDeleting }] = useDeleteGroupMutation();
+
+  const executeDelete = async () => {
+    try {
+      const res = await deleteGroup(id as string).unwrap();
+      if (res.success) {
+        router.replace('/(photographer)/dashboard');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Failed to delete group');
+    }
+  };
+
+  const handleDelete = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm("Are you sure you want to delete this group?")) {
+        executeDelete();
+      }
+    } else {
+      Alert.alert("Delete Group", "Are you sure you want to delete this group? This action cannot be undone.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: executeDelete }
+      ]);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -72,10 +101,10 @@ export default function SettingsScreen() {
               </View>
               <ChevronRight color="#C7C7CC" size={20} />
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.menuItem, { borderBottomWidth: 0 }]}>
+            <TouchableOpacity style={[styles.menuItem, { borderBottomWidth: 0 }]} onPress={handleDelete} disabled={isDeleting}>
               <View style={styles.menuLeft}>
-                <Trash2 color="#FF3B30" size={22} />
-                <Text style={[styles.menuLabel, { color: '#FF3B30' }]}>Delete Group</Text>
+                {isDeleting ? <ActivityIndicator color="#FF3B30" size="small" /> : <Trash2 color="#FF3B30" size={22} />}
+                <Text style={[styles.menuLabel, { color: '#FF3B30' }]}>{isDeleting ? 'Deleting...' : 'Delete Group'}</Text>
               </View>
               <ChevronRight color="#C7C7CC" size={20} />
             </TouchableOpacity>

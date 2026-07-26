@@ -3,6 +3,8 @@ import { router } from 'expo-router';
 import { X, UserPlus, AlertCircle, ArrowRight } from 'lucide-react-native';
 import { useState, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useJoinGroupMutation } from '../store/apiSlice';
+import { ActivityIndicator } from 'react-native';
 
 export default function JoinEventScreen() {
   const [code, setCode] = useState(['', '', '', '', '', '']);
@@ -22,6 +24,29 @@ export default function JoinEventScreen() {
   const handleKeyPress = (e: any, index: number) => {
     if (e.nativeEvent.key === 'Backspace' && !code[index] && index > 0) {
       inputs.current[index - 1].focus();
+    }
+  };
+
+  const [joinGroup, { isLoading }] = useJoinGroupMutation();
+
+  const handleJoin = async () => {
+    const joinCode = code.join('');
+    if (joinCode.length !== 6) {
+      alert("Please enter a valid 6-digit code");
+      return;
+    }
+    
+    try {
+      const res = await joinGroup({
+        joinCode,
+        is_platform: Platform.OS,
+      }).unwrap();
+      
+      // Navigate on success
+      router.replace('/face-registration');
+    } catch(e) {
+      console.error(e);
+      alert('Failed to join group. Please check the code.');
     }
   };
 
@@ -82,10 +107,17 @@ export default function JoinEventScreen() {
 
                   <TouchableOpacity 
                     style={styles.joinBtn}
-                    onPress={() => router.replace('/face-registration')}
+                    onPress={handleJoin}
+                    disabled={isLoading}
                   >
-                    <Text style={styles.joinBtnText}>Join Group</Text>
-                    <ArrowRight color="#fff" size={20} />
+                    {isLoading ? (
+                      <ActivityIndicator color="#111" />
+                    ) : (
+                      <>
+                        <Text style={styles.joinBtnText}>Join Group</Text>
+                        <ArrowRight color="#fff" size={20} />
+                      </>
+                    )}
                   </TouchableOpacity>
                 </View>
 

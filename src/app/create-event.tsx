@@ -3,6 +3,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { X, PlayCircle, Image as ImageIcon, Heart, Briefcase, Gift, Sparkles, Users, Baby, Music, MoreHorizontal, Check } from 'lucide-react-native';
 import { useState } from 'react';
+import { useCreateGroupMutation } from '../store/apiSlice';
+import { ActivityIndicator } from 'react-native';
 
 const EVENT_TYPES = [
   { id: 'wedding', label: 'Wedding', icon: Heart },
@@ -20,6 +22,35 @@ export default function CreateEventScreen() {
   const [groupType, setGroupType] = useState('private');
   const [eventType, setEventType] = useState('wedding');
   const [name, setName] = useState('');
+  
+  const [createGroup, { isLoading }] = useCreateGroupMutation();
+
+  const handleCreate = async () => {
+    if (!name.trim()) {
+      alert("Please enter a group name");
+      return;
+    }
+    
+    try {
+      const res = await createGroup({
+        name,
+        type: groupType,
+        eventType,
+        description: "",
+        eventDate: "",
+        location: "",
+        is_platform: Platform.OS,
+        monetization: { enabled: false, pricePerPhoto: 0, currency: "INR" }
+      }).unwrap();
+      
+      if (res.success && res.group) {
+        router.replace(`/(photographer)/event/${res.group.id}`);
+      }
+    } catch (error) {
+      console.error('Failed to create group:', error);
+      alert('Failed to create group. Please try again.');
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -124,8 +155,12 @@ export default function CreateEventScreen() {
             
             {/* Floating Footer Button */}
             <View style={styles.footer}>
-              <TouchableOpacity style={styles.createBtn} onPress={() => router.back()}>
-                <Text style={styles.createBtnText}>Create Group Now</Text>
+              <TouchableOpacity style={styles.createBtn} onPress={handleCreate} disabled={isLoading}>
+                {isLoading ? (
+                  <ActivityIndicator color="#111" />
+                ) : (
+                  <Text style={styles.createBtnText}>Create Group Now</Text>
+                )}
               </TouchableOpacity>
             </View>
 

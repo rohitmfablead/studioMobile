@@ -3,9 +3,14 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ImageB
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ChevronLeft, Download, Search, RefreshCw, Layers, FileText } from 'lucide-react-native';
+import { useGetGroupDownloadHistoryQuery } from '../../../../../store/apiSlice';
 
 export default function DownloadHistory() {
   const { id } = useLocalSearchParams();
+  const { data, isLoading } = useGetGroupDownloadHistoryQuery(id as string);
+
+  const summary = data?.summary || { total_downloads: 0, total_unique: 0, total_repetitive: 0, total_bulk: 0 };
+  const records = data?.data || [];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -34,7 +39,7 @@ export default function DownloadHistory() {
               <Download color="#FF6B00" size={16} />
             </View>
             <View>
-              <Text style={styles.statVal}>0</Text>
+              <Text style={styles.statVal}>{summary.total_downloads}</Text>
               <Text style={styles.statLabel}>Total</Text>
             </View>
           </View>
@@ -44,7 +49,7 @@ export default function DownloadHistory() {
                <Text style={{color: '#0284C7', fontSize: 10, fontWeight: 'bold'}}>NEW</Text>
             </View>
             <View>
-              <Text style={styles.statVal}>0</Text>
+              <Text style={styles.statVal}>{summary.total_unique}</Text>
               <Text style={styles.statLabel}>Unique</Text>
             </View>
           </View>
@@ -54,7 +59,7 @@ export default function DownloadHistory() {
               <RefreshCw color="#9333EA" size={16} />
             </View>
             <View>
-              <Text style={styles.statVal}>0</Text>
+              <Text style={styles.statVal}>{summary.total_repetitive}</Text>
               <Text style={styles.statLabel}>Repetitive</Text>
             </View>
           </View>
@@ -64,7 +69,7 @@ export default function DownloadHistory() {
               <Layers color="#D97706" size={16} />
             </View>
             <View>
-              <Text style={styles.statVal}>0</Text>
+              <Text style={styles.statVal}>{summary.total_bulk}</Text>
               <Text style={styles.statLabel}>Bulk</Text>
             </View>
           </View>
@@ -83,7 +88,7 @@ export default function DownloadHistory() {
         </View>
 
         {/* List Header */}
-        <Text style={styles.recordCount}>0 records</Text>
+        <Text style={styles.recordCount}>{records.length} records</Text>
         
         <View style={styles.listContainer}>
           <View style={styles.listHeaderRow}>
@@ -94,14 +99,30 @@ export default function DownloadHistory() {
             <Text style={[styles.colHeader, {textAlign: 'right'}]}>Action</Text>
           </View>
 
-          {/* Empty State */}
-          <View style={styles.emptyState}>
-            <FileText color="#C7C7CC" size={32} style={{marginBottom: 10}} />
-            <Text style={styles.emptyText}>No downloads found matching your criteria.</Text>
-          </View>
+          {/* Data State */}
+          {isLoading ? (
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <Text style={styles.emptyText}>Loading...</Text>
+            </View>
+          ) : records.length === 0 ? (
+            <View style={styles.emptyState}>
+              <FileText color="#C7C7CC" size={32} style={{marginBottom: 10}} />
+              <Text style={styles.emptyText}>No downloads found matching your criteria.</Text>
+            </View>
+          ) : (
+            records.map((item: any, index: number) => (
+              <View key={index} style={styles.listRow}>
+                <Text style={[styles.colCell, {flex: 2}]} numberOfLines={1}>{item?.user?.name || item?.participant_name || 'Anonymous'}</Text>
+                <Text style={styles.colCell}>{item?.type || 'Single'}</Text>
+                <Text style={styles.colCell}>{item?.format || 'JPG'}</Text>
+                <Text style={styles.colCell}>{item?.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'}</Text>
+                <Text style={[styles.colCell, {textAlign: 'right', color: '#0284C7'}]}>View</Text>
+              </View>
+            ))
+          )}
         </View>
 
-        <Text style={styles.footerText}>Showing 0 of 0 records</Text>
+        <Text style={styles.footerText}>Showing {records.length} of {summary.total_downloads} records</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -135,7 +156,9 @@ const styles = StyleSheet.create({
   
   listContainer: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, backgroundColor: '#fff', overflow: 'hidden', marginBottom: 15 },
   listHeaderRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#F2F2F7', padding: 12, backgroundColor: '#FAFAFA' },
+  listRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#F2F2F7', padding: 12, alignItems: 'center' },
   colHeader: { flex: 1, fontSize: 11, fontWeight: '600', color: '#666' },
+  colCell: { flex: 1, fontSize: 12, color: '#333' },
 
   emptyState: { paddingVertical: 40, alignItems: 'center', justifyContent: 'center' },
   emptyText: { fontSize: 13, color: '#888' },

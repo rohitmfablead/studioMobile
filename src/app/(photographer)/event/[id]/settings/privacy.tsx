@@ -1,11 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ChevronLeft, Edit3, Link as LinkIcon, EyeOff, ScanFace, Lock, Globe, Users, CheckCircle2 } from 'lucide-react-native';
+import { useGetGroupDetailsQuery, useUpdateGroupDetailsMutation } from '../../../../../store/apiSlice';
 
 export default function PrivacySettings() {
   const { id } = useLocalSearchParams();
+  const { data, isLoading, refetch } = useGetGroupDetailsQuery(id as string);
+  const [updateGroupDetails, { isLoading: isUpdating }] = useUpdateGroupDetailsMutation();
+
   const [canChangeName, setCanChangeName] = useState(false);
   const [linkJoin, setLinkJoin] = useState(true);
   const [anonView, setAnonView] = useState(false);
@@ -13,6 +17,43 @@ export default function PrivacySettings() {
   
   const [photoAccess, setPhotoAccess] = useState('Small'); // Small, Big
   const [uploadPerm, setUploadPerm] = useState('All'); // Select, All
+  
+  const [toastMsg, setToastMsg] = useState('');
+
+  useEffect(() => {
+    if (data?.success && data?.group?.privacy) {
+      const p = data.group.privacy;
+      setCanChangeName(p.allowMemberEdit || false);
+      setLinkJoin(p.allowJoinByLink !== false);
+      setAnonView(p.allowAnonymousView || false);
+      setLiveness(p.requireFaceVerification || false);
+      setUploadPerm(p.uploadPermission === 'select' ? 'Select' : 'All');
+    }
+  }, [data]);
+
+  const handleSave = async () => {
+    try {
+      const payload = {
+        privacy: {
+          allowMemberEdit: canChangeName,
+          allowJoinByLink: linkJoin,
+          allowAnonymousView: anonView,
+          requireFaceVerification: liveness,
+          uploadPermission: uploadPerm === 'All' ? 'all' : 'select'
+        }
+      };
+      const res = await updateGroupDetails({ id: id as string, body: payload }).unwrap();
+      if (res.success) {
+        setToastMsg('Privacy settings updated!');
+        setTimeout(() => setToastMsg(''), 3000);
+        refetch();
+      }
+    } catch (err) {
+      console.error('Update failed:', err);
+      setToastMsg('Failed to update privacy!');
+      setTimeout(() => setToastMsg(''), 3000);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -27,12 +68,22 @@ export default function PrivacySettings() {
             <Text style={styles.headerSubtitle}>Configure access controls and permissions</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.saveBtn}>
-          <Text style={styles.saveBtnText}>Save Settings</Text>
+        <TouchableOpacity style={[styles.saveBtn, isUpdating && { opacity: 0.6 }]} onPress={handleSave} disabled={isUpdating}>
+          {isUpdating ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.saveBtnText}>Save Settings</Text>
+          )}
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 50 }}>
+        {isLoading ? (
+          <View style={{ padding: 20, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#FF6B00" />
+          </View>
+        ) : (
+          <>
         {/* Group Access & Joining */}
         <Text style={styles.sectionTitle}>
           <Globe color="#8E8E93" size={14} style={{marginRight: 6}} /> GROUP ACCESS & JOINING
@@ -135,7 +186,19 @@ export default function PrivacySettings() {
           </TouchableOpacity>
         </View>
 
+          </>
+        )}
       </ScrollView>
+
+      {/* Custom Toast Notification */}
+      {toastMsg ? (
+        <View style={styles.toastContainer}>
+          <View style={styles.toast}>
+            <CheckCircle2 color="#fff" size={18} />
+            <Text style={styles.toastText}>{toastMsg}</Text>
+          </View>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -168,4 +231,8 @@ const styles = StyleSheet.create({
   scTitle: { fontSize: 14, fontWeight: '600', color: '#555', marginBottom: 4 },
   scSub: { fontSize: 11, color: '#888', lineHeight: 16 },
   scCheck: { position: 'absolute', top: 12, right: 12 },
+
+  toastContainer: { position: 'absolute', bottom: 40, left: 0, right: 0, alignItems: 'center', zIndex: 999 },
+  toast: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#333', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 25, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 5, elevation: 6 },
+  toastText: { color: '#fff', fontSize: 14, fontWeight: '500', marginLeft: 10 },
 });

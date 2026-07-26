@@ -229,10 +229,44 @@ export const appApi = createApi({
         method: 'GET',
       }),
     }),
+    createGroup: builder.mutation<any, any>({
+      query: (body) => ({
+        url: API_ENDPOINTS.GROUPS.CREATE,
+        method: 'POST',
+        body,
+      }),
+    }),
+    joinGroup: builder.mutation<any, any>({
+      query: (body) => ({
+        url: API_ENDPOINTS.GROUPS.JOIN,
+        method: 'POST',
+        body,
+      }),
+    }),
     getGroupDetails: builder.query<GetGroupDetailsResponse, string | number>({
       query: (id) => ({
         url: API_ENDPOINTS.GROUPS.DETAILS(id),
         method: 'GET',
+      }),
+    }),
+    updateGroupDetails: builder.mutation<any, { id: string | number; body: any }>({
+      query: ({ id, body }) => ({
+        url: API_ENDPOINTS.GROUPS.DETAILS(id),
+        method: 'PUT',
+        body,
+      }),
+    }),
+    deleteGroup: builder.mutation<any, string | number>({
+      query: (id) => ({
+        url: API_ENDPOINTS.GROUPS.DETAILS(id),
+        method: 'DELETE',
+      }),
+    }),
+    updateGroupViewDownloadSettings: builder.mutation<any, { id: string | number; body: any }>({
+      query: ({ id, body }) => ({
+        url: API_ENDPOINTS.GROUPS.VIEW_DOWNLOAD(id),
+        method: 'PUT',
+        body,
       }),
     }),
     getGroupPhotos: builder.query<GetGroupPhotosResponse, { id: string | number; params?: any }>({
@@ -240,6 +274,57 @@ export const appApi = createApi({
         url: API_ENDPOINTS.GROUPS.PHOTOS(id),
         method: 'GET',
         params,
+      }),
+    }),
+    getGroupParticipants: builder.query<any, { id: string | number; params?: any }>({
+      query: ({ id, params }) => ({
+        url: API_ENDPOINTS.GROUPS.PARTICIPANTS(id),
+        method: 'GET',
+        params,
+      }),
+    }),
+    matchMyPhotos: builder.mutation<any, string | number>({
+      query: (id) => ({
+        url: API_ENDPOINTS.GROUPS.MATCH_MY_PHOTOS(id),
+        method: 'POST',
+      }),
+    }),
+    getGroupDownloadHistory: builder.query<any, string | number>({
+      query: (id) => ({
+        url: API_ENDPOINTS.GROUPS.DOWNLOAD_HISTORY(id),
+        method: 'GET',
+      }),
+    }),
+    getGroupFolders: builder.query<any, string | number>({
+      query: (id) => ({
+        url: API_ENDPOINTS.GROUPS.FOLDERS(id),
+        method: 'GET',
+      }),
+    }),
+    getGroupFolders: builder.query<any, string | number>({
+      query: (id) => ({
+        url: API_ENDPOINTS.GROUPS.FOLDERS(id),
+        method: 'GET',
+      }),
+    }),
+    createGroupFolder: builder.mutation<any, { id: string | number; body: { name: string; description?: string } }>({
+      query: ({ id, body }) => ({
+        url: API_ENDPOINTS.GROUPS.FOLDERS(id),
+        method: 'POST',
+        body,
+      }),
+    }),
+    updateGroupFolder: builder.mutation<any, { id: string | number; folderId: string | number; body: { name: string; description?: string } }>({
+      query: ({ id, folderId, body }) => ({
+        url: API_ENDPOINTS.GROUPS.FOLDER_ACTION(id, folderId),
+        method: 'PUT',
+        body,
+      }),
+    }),
+    deleteGroupFolder: builder.mutation<any, { id: string | number; folderId: string | number }>({
+      query: ({ id, folderId }) => ({
+        url: API_ENDPOINTS.GROUPS.FOLDER_ACTION(id, folderId),
+        method: 'DELETE',
       }),
     }),
     getGroupParticipantsMatched: builder.query<any, string | number>({
@@ -255,16 +340,54 @@ export const appApi = createApi({
         params,
       }),
     }),
-    uploadPhotos: builder.mutation<any, { id: string | number; body: FormData }>({
-      queryFn: async ({ id, body }, api) => {
+    uploadPhotos: builder.mutation<any, { 
+      id: string | number; 
+      assets: any[]; 
+      enable_watermark?: string; 
+      no_watermark?: string; 
+      is_platform?: string; 
+    }>({
+      queryFn: async ({ id, assets, enable_watermark, no_watermark, is_platform }, api) => {
         try {
           const state = api.getState() as any;
           const token = state.app.token;
           const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'https://fablead-studio.com/services/api/';
+          
+          const { Platform } = require('react-native');
+          const formData = new FormData();
+          
+          for (let i = 0; i < assets.length; i++) {
+            const asset = assets[i];
+            const fileName = asset.fileName || `photo_${i}.jpg`;
+            const mimeType = asset.mimeType || 'image/jpeg';
+            
+            if (Platform.OS === 'web') {
+              // On web, fetch the blob from the URI to append a true File object
+              const res = await fetch(asset.uri);
+              const blob = await res.blob();
+              const file = new File([blob], fileName, { type: mimeType });
+              formData.append('photos[]', file);
+              formData.append('files[]', file);
+            } else {
+              // React Native expects the object format
+              const fileObj = {
+                uri: String(asset.uri),
+                name: String(fileName),
+                type: String(mimeType),
+              };
+              formData.append('photos[]', fileObj as any);
+              formData.append('files[]', fileObj as any);
+            }
+          }
+          
+          if (enable_watermark !== undefined) formData.append('enable_watermark', String(enable_watermark));
+          if (no_watermark !== undefined) formData.append('no_watermark', String(no_watermark));
+          if (is_platform !== undefined) formData.append('is_platform', String(is_platform));
+
           const response = await fetch(`${baseUrl}groups/${id}/photos/upload`, {
             method: 'POST',
             headers: token ? { 'authorization': `Bearer ${token}` } : {},
-            body,
+            body: formData,
           });
           const result = await response.json();
           if (!response.ok) {
@@ -350,10 +473,22 @@ export const {
   useGetUserProfileQuery,
   useGetFaceStatusQuery,
   useGetGroupsQuery,
+  useCreateGroupMutation,
+  useJoinGroupMutation,
   useGetGroupDetailsQuery,
+  useUpdateGroupDetailsMutation,
+  useDeleteGroupMutation,
+  useUpdateGroupViewDownloadSettingsMutation,
   useGetGroupPhotosQuery,
+  useGetGroupParticipantsQuery,
+  useMatchMyPhotosMutation,
+  useGetGroupDownloadHistoryQuery,
   useGetGroupParticipantsMatchedQuery,
   useGetGroupPhotoDeleteRequestsQuery,
   useGetGroupVideoDeleteRequestsQuery,
+  useGetGroupFoldersQuery,
+  useCreateGroupFolderMutation,
+  useUpdateGroupFolderMutation,
+  useDeleteGroupFolderMutation,
   useUploadPhotosMutation,
 } = appApi;

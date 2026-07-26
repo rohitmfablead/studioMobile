@@ -2,11 +2,17 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ImageBackground, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ChevronLeft, Search, MoreVertical, Trash2, LogOut, UserPlus } from 'lucide-react-native';
+import { ChevronLeft, Search, MoreVertical, Trash2, LogOut, UserPlus, Shield } from 'lucide-react-native';
+import { useGetGroupParticipantsQuery } from '../../../../../store/apiSlice';
 
 export default function ParticipantsSettings() {
   const { id } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState('All');
+  
+  const { data: participantsData, isLoading } = useGetGroupParticipantsQuery({ id: id as string, params: { page: 1, limit: 20 } });
+  
+  const participants = participantsData?.participants || [];
+  const totalParticipants = participantsData?.total || 0;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -64,7 +70,7 @@ export default function ParticipantsSettings() {
                 <Text style={[styles.filterTabText, activeTab === tab && styles.filterTabTextActive]}>{tab}</Text>
                 <View style={[styles.badge, activeTab === tab && styles.badgeActive]}>
                   <Text style={[styles.badgeText, activeTab === tab && styles.badgeTextActive]}>
-                    {tab === 'All' ? '1' : '0'}
+                    {tab === 'All' ? totalParticipants : '0'}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -74,27 +80,35 @@ export default function ParticipantsSettings() {
 
         {/* List Container */}
         <View style={styles.listContainer}>
-          <View style={styles.userRow}>
-            <Image source={{ uri: 'https://i.pravatar.cc/150?img=11' }} style={styles.userAvatar} />
-            <View style={styles.userInfo}>
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                 <Text style={styles.userName}>rohit kumar</Text>
-                 <View style={styles.personIcon}>
-                   <UserPlus color="#999" size={10} />
-                 </View>
+          {isLoading ? (
+            <Text style={{ padding: 20, textAlign: 'center', color: '#666' }}>Loading participants...</Text>
+          ) : participants.length === 0 ? (
+            <Text style={{ padding: 20, textAlign: 'center', color: '#666' }}>No participants found.</Text>
+          ) : (
+            participants.map((user: any, index: number) => (
+              <View key={user.id || index} style={[styles.userRow, index !== participants.length - 1 && { borderBottomWidth: 1, borderBottomColor: '#F2F2F7' }]}>
+                <Image source={{ uri: user.avatar || 'https://i.pravatar.cc/150' }} style={styles.userAvatar} />
+                <View style={styles.userInfo}>
+                  <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                    <Text style={styles.userName}>{user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown User'}</Text>
+                    <View style={styles.personIcon}>
+                      {user.role === 'owner' ? <Shield color="#FF6B00" size={12} /> : <UserPlus color="#999" size={10} />}
+                    </View>
+                  </View>
+                  <Text style={styles.userEmail}>{user.email || 'No email'}</Text>
+                </View>
+                <View style={styles.roleBadge}>
+                  <Text style={styles.roleText}>{user.role === 'owner' ? 'Owner' : 'Member'}</Text>
+                </View>
+                <TouchableOpacity style={styles.moreBtn}>
+                  <MoreVertical color="#999" size={18} />
+                </TouchableOpacity>
               </View>
-              <Text style={styles.userEmail}>rohit.fablead@gmail.com</Text>
-            </View>
-            <View style={styles.roleBadge}>
-              <Text style={styles.roleText}>Owner</Text>
-            </View>
-            <TouchableOpacity style={styles.moreBtn}>
-              <MoreVertical color="#999" size={18} />
-            </TouchableOpacity>
-          </View>
+            ))
+          )}
         </View>
 
-        <Text style={styles.footerText}>Showing 1 of 1 participants</Text>
+        <Text style={styles.footerText}>Showing {participants.length} of {totalParticipants} participants</Text>
 
       </ScrollView>
     </SafeAreaView>

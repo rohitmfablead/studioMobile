@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingVi
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
+import { setItemAsync } from '../../utils/storage';
 import { Mail, Phone, Eye, ArrowRight, User, Camera, ScanFace, ArrowLeft, Lock, Image as ImageIcon, CheckCircle } from 'lucide-react-native';
 import { 
   useLoginMutation,
@@ -79,9 +79,9 @@ export default function LoginScreen() {
       const res = await login({ email: emailOrPhone, password, type: 1 }).unwrap();
       console.log('Login Response:', res);
       if (res && res.success && res.user && res.token) {
-        await SecureStore.setItemAsync('userToken', res.token);
-        await SecureStore.setItemAsync('userRole', res.user.role);
-        await SecureStore.setItemAsync('userId', res.user.id.toString());
+        await setItemAsync('userToken', res.token);
+        await setItemAsync('userRole', res.user.role);
+        await setItemAsync('userId', res.user.id.toString());
         dispatch(setCredentials({ token: res.token, user: res.user }));
         
         setRole(res.user.role as any);

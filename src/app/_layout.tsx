@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Provider } from 'react-redux';
-import * as SecureStore from 'expo-secure-store';
+import { getItemAsync } from '../utils/storage';
 import * as SplashScreen from 'expo-splash-screen';
 import { store } from '../store';
 import { setCredentials } from '../store/slices/appSlice';
@@ -19,9 +19,9 @@ function AppInitializer() {
   useEffect(() => {
     async function prepare() {
       try {
-        const token = await SecureStore.getItemAsync('userToken');
-        const role = await SecureStore.getItemAsync('userRole');
-        const userId = await SecureStore.getItemAsync('userId');
+        const token = await getItemAsync('userToken');
+        const role = await getItemAsync('userRole');
+        const userId = await getItemAsync('userId');
         
         if (token) {
           // Re-hydrate Redux with the saved token

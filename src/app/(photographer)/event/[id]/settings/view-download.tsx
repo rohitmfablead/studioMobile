@@ -1,18 +1,60 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { ChevronLeft, Download, Share2, Smartphone, MonitorSmartphone, Monitor, LayoutGrid, CheckCircle2 } from 'lucide-react-native';
+import { useGetGroupDetailsQuery, useUpdateGroupViewDownloadSettingsMutation } from '../../../../../store/apiSlice';
 
 export default function ViewDownloadSettings() {
   const { id } = useLocalSearchParams();
+  const { data, isLoading, refetch } = useGetGroupDetailsQuery(id as string);
+  const [updateViewDownload, { isLoading: isUpdating }] = useUpdateGroupViewDownloadSettingsMutation();
+
   const [allowDownload, setAllowDownload] = useState(true);
   const [enableShare, setEnableShare] = useState(true);
   const [enableScreenshot, setEnableScreenshot] = useState(true);
   const [bulkDownload, setBulkDownload] = useState(false);
   
-  const [quality, setQuality] = useState('Original');
-  const [viewingPlatform, setViewingPlatform] = useState('Both');
+  const [quality, setQuality] = useState('original');
+  const [viewingPlatform, setViewingPlatform] = useState('both');
+  
+  const [toastMsg, setToastMsg] = useState('');
+
+  useEffect(() => {
+    if (data?.success && data?.group?.viewDownload) {
+      const v = data.group.viewDownload;
+      setAllowDownload(v.allowDownloading !== false);
+      setEnableShare(v.enableSharing !== false);
+      setEnableScreenshot(v.enableScreenshots !== false);
+      setBulkDownload(v.bulkDownloads || false);
+      setQuality(v.downloadQuality || 'original');
+      setViewingPlatform(v.viewingPlatform || 'both');
+    }
+  }, [data]);
+
+  const handleSave = async () => {
+    try {
+      const payload = {
+        allowDownloading: allowDownload,
+        enableSharing: enableShare,
+        enableScreenshots: enableScreenshot,
+        downloadQuality: quality.toLowerCase(),
+        bulkDownloads: bulkDownload,
+        viewingPlatform: viewingPlatform.toLowerCase()
+      };
+      
+      const res = await updateViewDownload({ id: id as string, body: payload }).unwrap();
+      if (res.success) {
+        setToastMsg('Settings updated successfully!');
+        setTimeout(() => setToastMsg(''), 3000);
+        refetch();
+      }
+    } catch (err) {
+      console.error('Update failed:', err);
+      setToastMsg('Failed to update settings!');
+      setTimeout(() => setToastMsg(''), 3000);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -30,6 +72,12 @@ export default function ViewDownloadSettings() {
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 100 }}>
+        {isLoading ? (
+          <View style={{ padding: 20, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#FF6B00" />
+          </View>
+        ) : (
+          <>
         {/* Download Settings */}
         <Text style={styles.sectionTitle}>
           <Download color="#FF6B00" size={14} style={{marginRight: 6}} /> Download Settings
@@ -61,17 +109,16 @@ export default function ViewDownloadSettings() {
           </View>
         </View>
 
-        {/* Download Quality */}
         <Text style={styles.subLabel}>Download Quality</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalCards} style={{marginBottom: 20}}>
-          {['Original', 'High', 'Medium', 'Low'].map((q) => (
+          {['original', 'high', 'medium', 'low'].map((q) => (
             <TouchableOpacity 
               key={q} 
-              style={[styles.smallCard, quality === q && styles.smallCardActive]} 
+              style={[styles.smallCard, quality.toLowerCase() === q && styles.smallCardActive]} 
               onPress={() => setQuality(q)}
             >
-              <Text style={[styles.scTitle, quality === q && { color: '#111' }]}>{q}</Text>
-              <Text style={styles.scSub}>{q === 'Original' ? 'Full resolution' : q + ' quality'}</Text>
+              <Text style={[styles.scTitle, quality.toLowerCase() === q && { color: '#111' }]}>{q.charAt(0).toUpperCase() + q.slice(1)}</Text>
+              <Text style={styles.scSub}>{q === 'original' ? 'Full resolution' : q.charAt(0).toUpperCase() + q.slice(1) + ' quality'}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -91,36 +138,52 @@ export default function ViewDownloadSettings() {
         <Text style={styles.subLabel}>Viewing Platforms</Text>
 
         <View style={styles.cardsRow}>
-          <TouchableOpacity style={[styles.selectionCard, viewingPlatform === 'Web' && styles.selectionCardActive]} onPress={() => setViewingPlatform('Web')}>
-            <View style={[styles.cardIconBox, { backgroundColor: viewingPlatform === 'Web' ? '#FFB075' : '#F2F2F7' }]}>
-              <Monitor color={viewingPlatform === 'Web' ? '#fff' : '#666'} size={18} />
+          <TouchableOpacity style={[styles.selectionCard, viewingPlatform.toLowerCase() === 'web' && styles.selectionCardActive]} onPress={() => setViewingPlatform('web')}>
+            <View style={[styles.cardIconBox, { backgroundColor: viewingPlatform.toLowerCase() === 'web' ? '#FFB075' : '#F2F2F7' }]}>
+              <Monitor color={viewingPlatform.toLowerCase() === 'web' ? '#fff' : '#666'} size={18} />
             </View>
-            <Text style={[styles.platformTitle, viewingPlatform === 'Web' && { color: '#111' }]}>Web Only</Text>
+            <Text style={[styles.platformTitle, viewingPlatform.toLowerCase() === 'web' && { color: '#111' }]}>Web Only</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.selectionCard, viewingPlatform === 'App' && styles.selectionCardActive]} onPress={() => setViewingPlatform('App')}>
-             <View style={[styles.cardIconBox, { backgroundColor: viewingPlatform === 'App' ? '#FFB075' : '#F2F2F7' }]}>
-              <Smartphone color={viewingPlatform === 'App' ? '#fff' : '#666'} size={18} />
+          <TouchableOpacity style={[styles.selectionCard, viewingPlatform.toLowerCase() === 'app' && styles.selectionCardActive]} onPress={() => setViewingPlatform('app')}>
+             <View style={[styles.cardIconBox, { backgroundColor: viewingPlatform.toLowerCase() === 'app' ? '#FFB075' : '#F2F2F7' }]}>
+              <Smartphone color={viewingPlatform.toLowerCase() === 'app' ? '#fff' : '#666'} size={18} />
             </View>
-            <Text style={[styles.platformTitle, viewingPlatform === 'App' && { color: '#111' }]}>App Only</Text>
+            <Text style={[styles.platformTitle, viewingPlatform.toLowerCase() === 'app' && { color: '#111' }]}>App Only</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.selectionCard, viewingPlatform === 'Both' && styles.selectionCardActive]} onPress={() => setViewingPlatform('Both')}>
-             <View style={[styles.cardIconBox, { backgroundColor: viewingPlatform === 'Both' ? '#FF6B00' : '#F2F2F7' }]}>
-              <LayoutGrid color={viewingPlatform === 'Both' ? '#fff' : '#666'} size={18} />
+          <TouchableOpacity style={[styles.selectionCard, viewingPlatform.toLowerCase() === 'both' && styles.selectionCardActive]} onPress={() => setViewingPlatform('both')}>
+             <View style={[styles.cardIconBox, { backgroundColor: viewingPlatform.toLowerCase() === 'both' ? '#FF6B00' : '#F2F2F7' }]}>
+              <LayoutGrid color={viewingPlatform.toLowerCase() === 'both' ? '#fff' : '#666'} size={18} />
             </View>
-            <Text style={[styles.platformTitle, viewingPlatform === 'Both' && { color: '#111' }]}>Both Web & App</Text>
-            {viewingPlatform === 'Both' && <CheckCircle2 color="#FF6B00" size={16} style={styles.scCheck} />}
+            <Text style={[styles.platformTitle, viewingPlatform.toLowerCase() === 'both' && { color: '#111' }]}>Both Web & App</Text>
+            {viewingPlatform.toLowerCase() === 'both' && <CheckCircle2 color="#FF6B00" size={16} style={styles.scCheck} />}
           </TouchableOpacity>
         </View>
+          </>
+        )}
       </ScrollView>
 
       {/* Floating Save Button */}
       <View style={styles.floatingFooter}>
-        <TouchableOpacity style={styles.saveBtn}>
-          <Text style={styles.saveBtnText}>Save Settings</Text>
+        <TouchableOpacity style={[styles.saveBtn, isUpdating && { opacity: 0.6 }]} onPress={handleSave} disabled={isUpdating}>
+          {isUpdating ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.saveBtnText}>Save Settings</Text>
+          )}
         </TouchableOpacity>
       </View>
+
+      {/* Custom Toast Notification */}
+      {toastMsg ? (
+        <View style={styles.toastContainer}>
+          <View style={styles.toast}>
+            <CheckCircle2 color="#fff" size={18} />
+            <Text style={styles.toastText}>{toastMsg}</Text>
+          </View>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -157,7 +220,11 @@ const styles = StyleSheet.create({
   platformTitle: { fontSize: 13, fontWeight: '600', color: '#555' },
   scCheck: { position: 'absolute', top: 10, right: 10 },
 
-  floatingFooter: { position: 'absolute', bottom: 0, width: '100%', padding: 15, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F2F2F7' },
+  floatingFooter: { position: 'absolute', bottom: 0, width: '100%', padding: 15, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F2F2F7', zIndex: 100 },
   saveBtn: { backgroundColor: '#FF6B00', paddingVertical: 14, borderRadius: 8, alignItems: 'center' },
   saveBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
+
+  toastContainer: { position: 'absolute', bottom: 90, left: 0, right: 0, alignItems: 'center', zIndex: 999 },
+  toast: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#333', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 25, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 5, elevation: 6 },
+  toastText: { color: '#fff', fontSize: 14, fontWeight: '500', marginLeft: 10 },
 });

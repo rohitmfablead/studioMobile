@@ -1,11 +1,94 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ChevronLeft, FolderPlus, ArrowRightLeft, AlignJustify, Folder } from 'lucide-react-native';
+import { ChevronLeft, FolderPlus, ArrowRightLeft, AlignJustify, Folder, MoreVertical } from 'lucide-react-native';
+import { useGetGroupFoldersQuery, useCreateGroupFolderMutation, useUpdateGroupFolderMutation, useDeleteGroupFolderMutation } from '../../../../../store/apiSlice';
 
 export default function FoldersSettings() {
   const { id } = useLocalSearchParams();
+  const { data: foldersData, isLoading, refetch } = useGetGroupFoldersQuery(id as string);
+  const [createGroupFolder, { isLoading: isCreating }] = useCreateGroupFolderMutation();
+  const [updateGroupFolder, { isLoading: isUpdating }] = useUpdateGroupFolderMutation();
+  const [deleteGroupFolder] = useDeleteGroupFolderMutation();
+  
+  const folders = foldersData?.data || [];
+  
+  const [showModal, setShowModal] = useState(false);
+  const [folderName, setFolderName] = useState('');
+  const [folderDesc, setFolderDesc] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  
+  const openCreateModal = () => {
+    setEditingId(null);
+    setFolderName('');
+    setFolderDesc('');
+    setShowModal(true);
+  };
+  
+  const handleSaveFolder = async () => {
+    if (!folderName.trim()) return;
+    try {
+      if (editingId) {
+        const res = await updateGroupFolder({ id: id as string, folderId: editingId, body: { name: folderName, description: folderDesc } }).unwrap();
+        if (res.success) {
+          setShowModal(false);
+          refetch();
+        }
+      } else {
+        const res = await createGroupFolder({ id: id as string, body: { name: folderName, description: folderDesc } }).unwrap();
+        if (res.success) {
+          setShowModal(false);
+          refetch();
+        }
+      }
+    } catch (err) {
+      console.error('Failed to save folder:', err);
+      Alert.alert('Error', 'Failed to save folder');
+    }
+  };
+
+  const handleFolderOptions = (folder: any) => {
+    Alert.alert(
+      'Folder Options',
+      folder.name,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Edit', 
+          onPress: () => {
+            setEditingId(folder.id);
+            setFolderName(folder.name);
+            setFolderDesc(folder.description || '');
+            setShowModal(true);
+          } 
+        },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert('Confirm Delete', 'Are you sure you want to delete this folder?', [
+              { text: 'Cancel', style: 'cancel' },
+              { 
+                text: 'Delete', 
+                style: 'destructive',
+                onPress: async () => {
+                  try {
+                    const res = await deleteGroupFolder({ id: id as string, folderId: folder.id }).unwrap();
+                    if (res.success) refetch();
+                  } catch (err) {
+                    Alert.alert('Error', 'Failed to delete folder');
+                  }
+                }
+              }
+            ]);
+          } 
+        }
+      ]
+    );
+  };
+
+  const isSaving = isCreating || isUpdating;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -30,7 +113,7 @@ export default function FoldersSettings() {
              <AlignJustify color="#333" size={14} />
              <Text style={styles.actionBtnOutlineText}>Rearrange</Text>
            </TouchableOpacity>
-           <TouchableOpacity style={styles.saveBtn}>
+           <TouchableOpacity style={styles.saveBtn} onPress={openCreateModal}>
              <FolderPlus color="#fff" size={14} />
              <Text style={styles.saveBtnText}>Create</Text>
            </TouchableOpacity>
@@ -38,14 +121,69 @@ export default function FoldersSettings() {
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 50 }}>
-        <View style={styles.emptyState}>
-          <View style={styles.emptyIconBox}>
-             <Folder color="#C7C7CC" size={32} />
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#FF6B00" style={{ marginTop: 50 }} />
+        ) : folders.length === 0 ? (
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIconBox}>
+               <Folder color="#C7C7CC" size={32} />
+            </View>
+            <Text style={styles.emptyTitle}>0 folders</Text>
+            <Text style={styles.emptySub}>Create a folder to start organizing photos.</Text>
           </View>
-          <Text style={styles.emptyTitle}>0 folders · 0 photos</Text>
-          <Text style={styles.emptySub}>Create a folder to start organizing photos.</Text>
-        </View>
+        ) : (
+          folders.map((folder: any, index: number) => (
+            <View key={folder.id || index} style={styles.folderCard}>
+              <View style={styles.folderLeft}>
+                <View style={styles.folderIconBox}>
+                  <Folder color="#FF6B00" size={20} fill="#FFF0E5" />
+                </View>
+                <View>
+                  <Text style={styles.folderName}>{folder.name}</Text>
+                  <Text style={styles.folderInfo}>{folder.photoCount || 0} photos</Text>
+                </View>
+              </View>
+              <TouchableOpacity style={styles.moreBtn} onPress={() => handleFolderOptions(folder)}>
+                <MoreVertical color="#999" size={20} />
+              </TouchableOpacity>
+            </View>
+          ))
+        )}
       </ScrollView>
+
+      {/* Create Folder Modal */}
+      <Modal visible={showModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{editingId ? 'Edit Folder' : 'Create New Folder'}</Text>
+            <Text style={styles.modalSub}>{editingId ? 'Update folder details' : 'Organize your photos into folders'}</Text>
+            
+            <TextInput 
+              style={styles.input} 
+              placeholder="Folder Name" 
+              value={folderName} 
+              onChangeText={setFolderName} 
+            />
+            
+            <TextInput 
+              style={[styles.input, styles.textArea]} 
+              placeholder="Description (Optional)" 
+              value={folderDesc} 
+              onChangeText={setFolderDesc} 
+              multiline
+            />
+            
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setShowModal(false)} disabled={isSaving}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalCreateBtn, isSaving && { opacity: 0.7 }]} onPress={handleSaveFolder} disabled={isSaving}>
+                {isSaving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.modalCreateText}>{editingId ? 'Save' : 'Create'}</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -69,4 +207,23 @@ const styles = StyleSheet.create({
   emptyIconBox: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#F2F2F7', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   emptyTitle: { fontSize: 16, fontWeight: '600', color: '#333' },
   emptySub: { fontSize: 13, color: '#888', marginTop: 4 },
+
+  folderCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, marginBottom: 10 },
+  folderLeft: { flexDirection: 'row', alignItems: 'center' },
+  folderIconBox: { width: 40, height: 40, borderRadius: 10, backgroundColor: '#FFF0E5', alignItems: 'center', justifyContent: 'center', marginRight: 15 },
+  folderName: { fontSize: 15, fontWeight: '600', color: '#111', marginBottom: 2 },
+  folderInfo: { fontSize: 12, color: '#666' },
+  moreBtn: { padding: 5 },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalContent: { width: '100%', backgroundColor: '#fff', borderRadius: 16, padding: 20 },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', marginBottom: 4 },
+  modalSub: { fontSize: 13, color: '#666', marginBottom: 20 },
+  input: { borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 15, paddingVertical: 12, fontSize: 14, color: '#111', marginBottom: 15 },
+  textArea: { height: 80, textAlignVertical: 'top' },
+  modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 10 },
+  modalCancelBtn: { paddingHorizontal: 15, paddingVertical: 10, borderRadius: 8 },
+  modalCancelText: { color: '#666', fontWeight: '600', fontSize: 14 },
+  modalCreateBtn: { backgroundColor: '#FF6B00', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, minWidth: 80, alignItems: 'center' },
+  modalCreateText: { color: '#fff', fontWeight: '600', fontSize: 14 },
 });
