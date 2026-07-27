@@ -21,11 +21,10 @@
       "package": "com.rohitm.fablead412.PhotoShareMobile"
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
       [
         "expo-splash-screen",
         {
@@ -37,11 +36,9 @@
       "expo-secure-store"
     ],
     "experiments": {
-      "typedRoutes": true,
       "reactCompiler": true
     },
     "extra": {
-      "router": {},
       "eas": {
         "projectId": "6ae91a98-6397-4679-89ff-c29b051125ff"
       }

@@ -211,6 +211,7 @@ export interface GetGroupDetailsResponse {
 
 export const appApi = createApi({
   reducerPath: 'appApi',
+  tagTypes: ['Photos', 'GroupDetails', 'Downloads', 'VideoDeleteRequests', 'PhotoDeleteRequests'],
   baseQuery: fetchBaseQuery({ 
     baseUrl: process.env.EXPO_PUBLIC_API_URL || 'https://fablead-studio.com/services/api/',
     prepareHeaders: (headers, { getState }) => {
@@ -249,10 +250,76 @@ export const appApi = createApi({
         method: 'GET',
       }),
     }),
+    deletePhotos: builder.mutation<any, { photoIds: string[] }>({
+      query: (data) => ({
+        url: API_ENDPOINTS.PHOTOS,
+        method: 'POST', // Use POST with _method spoofing to bypass WAF on DELETE with body
+        body: { ...data, _method: 'DELETE' },
+      }),
+      invalidatesTags: (result, error, arg) => [{ type: 'Photos', id: 'LIST' }],
+    }),
+    requestDeletePhoto: builder.mutation<any, { id: string | number; photoId: string | number; reason: string }>({
+      query: ({ id, photoId, reason }) => ({
+        url: API_ENDPOINTS.GROUPS.REQUEST_DELETE_PHOTO(id, photoId),
+        method: 'POST',
+        body: { reason },
+      }),
+    }),
     updateGroupDetails: builder.mutation<any, { id: string | number; body: any }>({
       query: ({ id, body }) => ({
         url: API_ENDPOINTS.GROUPS.DETAILS(id),
         method: 'PUT',
+        body,
+      }),
+    }),
+    getDashboardStats: builder.query<any, void>({
+      query: () => ({
+        url: API_ENDPOINTS.DASHBOARD.STATS,
+        method: 'GET',
+      }),
+    }),
+    getWatermarkSettings: builder.query<any, void>({
+      query: () => ({
+        url: API_ENDPOINTS.WATERMARK.SETTINGS,
+        method: 'GET',
+      }),
+    }),
+    getPhotographerPlans: builder.query<any, void>({
+      query: () => ({
+        url: API_ENDPOINTS.PLANS.PHOTOGRAPHER,
+        method: 'GET',
+      }),
+    }),
+    getBusinessSettings: builder.query<any, void>({
+      query: () => ({
+        url: API_ENDPOINTS.BUSINESS.SETTINGS,
+        method: 'GET',
+      }),
+    }),
+    updateBusinessSettings: builder.mutation<any, any>({
+      query: (body) => ({
+        url: API_ENDPOINTS.BUSINESS.SETTINGS,
+        method: 'PUT',
+        body,
+      }),
+    }),
+    saveWatermarkSettings: builder.mutation<any, FormData>({
+      query: (body) => ({
+        url: 'watermark',
+        method: 'POST',
+        body,
+      }),
+    }),
+    likePhoto: builder.mutation<any, string | number>({
+      query: (id) => ({
+        url: API_ENDPOINTS.PHOTO_ACTIONS.LIKE(id),
+        method: 'POST',
+      }),
+    }),
+    addDownloadHistory: builder.mutation<any, any>({
+      query: (body) => ({
+        url: API_ENDPOINTS.DOWNLOADS.HISTORY,
+        method: 'POST',
         body,
       }),
     }),
@@ -275,6 +342,21 @@ export const appApi = createApi({
         method: 'GET',
         params,
       }),
+      serializeQueryArgs: ({ queryArgs }) => {
+        return queryArgs.id; // cache by group id
+      },
+      merge: (currentCache, newItems, otherArgs) => {
+        if (otherArgs.arg.params?.page > 1) {
+          if (newItems.data?.photos?.length) {
+            currentCache.data.photos.push(...newItems.data.photos);
+          }
+        } else {
+          currentCache.data = newItems.data;
+        }
+      },
+      forceRefetch({ currentArg, previousArg }) {
+        return currentArg?.params?.page !== previousArg?.params?.page;
+      },
     }),
     getGroupParticipants: builder.query<any, { id: string | number; params?: any }>({
       query: ({ id, params }) => ({
@@ -292,12 +374,6 @@ export const appApi = createApi({
     getGroupDownloadHistory: builder.query<any, string | number>({
       query: (id) => ({
         url: API_ENDPOINTS.GROUPS.DOWNLOAD_HISTORY(id),
-        method: 'GET',
-      }),
-    }),
-    getGroupFolders: builder.query<any, string | number>({
-      query: (id) => ({
-        url: API_ENDPOINTS.GROUPS.FOLDERS(id),
         method: 'GET',
       }),
     }),
@@ -346,8 +422,9 @@ export const appApi = createApi({
       enable_watermark?: string; 
       no_watermark?: string; 
       is_platform?: string; 
+      onProgress?: (progress: number) => void;
     }>({
-      queryFn: async ({ id, assets, enable_watermark, no_watermark, is_platform }, api) => {
+      queryFn: async ({ id, assets, enable_watermark, no_watermark, is_platform, onProgress }, api) => {
         try {
           const state = api.getState() as any;
           const token = state.app.token;
@@ -384,16 +461,41 @@ export const appApi = createApi({
           if (no_watermark !== undefined) formData.append('no_watermark', String(no_watermark));
           if (is_platform !== undefined) formData.append('is_platform', String(is_platform));
 
-          const response = await fetch(`${baseUrl}groups/${id}/photos/upload`, {
-            method: 'POST',
-            headers: token ? { 'authorization': `Bearer ${token}` } : {},
-            body: formData,
+          const result = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `${baseUrl}groups/${id}/photos/upload`);
+            if (token) xhr.setRequestHeader('authorization', `Bearer ${token}`);
+            
+            if (xhr.upload && onProgress) {
+              xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                  const percent = Math.round((event.loaded / event.total) * 100);
+                  onProgress(percent);
+                }
+              };
+            }
+            
+            xhr.onload = () => {
+              try {
+                const res = JSON.parse(xhr.responseText);
+                if (xhr.status >= 200 && xhr.status < 300) {
+                  resolve({ data: res });
+                } else {
+                  resolve({ error: { status: xhr.status, data: res } });
+                }
+              } catch(e) {
+                resolve({ error: { status: xhr.status, data: xhr.responseText } });
+              }
+            };
+            
+            xhr.onerror = () => {
+              reject(new Error('Network request failed'));
+            };
+            
+            xhr.send(formData as any);
           });
-          const result = await response.json();
-          if (!response.ok) {
-            return { error: { status: response.status, data: result } };
-          }
-          return { data: result };
+          
+          return result as any;
         } catch (error: any) {
           return { error: { status: 'FETCH_ERROR', error: String(error) } };
         }
@@ -491,4 +593,14 @@ export const {
   useUpdateGroupFolderMutation,
   useDeleteGroupFolderMutation,
   useUploadPhotosMutation,
+  useRequestDeletePhotoMutation,
+  useDeletePhotosMutation,
+  useLikePhotoMutation,
+  useAddDownloadHistoryMutation,
+  useGetDashboardStatsQuery,
+  useGetWatermarkSettingsQuery,
+  useSaveWatermarkSettingsMutation,
+  useGetBusinessSettingsQuery,
+  useUpdateBusinessSettingsMutation,
+  useGetPhotographerPlansQuery,
 } = appApi;

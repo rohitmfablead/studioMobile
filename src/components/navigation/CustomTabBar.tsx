@@ -1,15 +1,14 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const focusedRoute = state.routes[state.index];
-  const ALLOWED_TABS = ['dashboard', 'home', 'events', 'settings', 'profile'];
+  const VISIBLE_ON_TABS = ['dashboard', 'home', 'events', 'settings', 'profile', 'eventdetails'];
 
   // If the current screen is not a main tab, hide the entire tab bar
-  if (!ALLOWED_TABS.includes(focusedRoute.name)) {
+  if (!VISIBLE_ON_TABS.includes(focusedRoute.name.toLowerCase())) {
     return null;
   }
 
@@ -18,11 +17,11 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
       <View style={styles.tabBar}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
-          
+
           // STRICT WHITELIST: Only show these exact tabs.
           // This prevents Expo Router from rendering every single sub-file as a tab.
           const ALLOWED_TABS = ['dashboard', 'home', 'events', 'settings', 'profile'];
-          if (!ALLOWED_TABS.includes(route.name)) {
+          if (!ALLOWED_TABS.includes(route.name.toLowerCase())) {
             return null;
           }
 
@@ -35,8 +34,8 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
             options.tabBarLabel !== undefined
               ? options.tabBarLabel
               : options.title !== undefined
-              ? options.title
-              : route.name;
+                ? options.title
+                : route.name;
 
           const isFocused = state.index === index;
 
@@ -70,10 +69,10 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
               onLongPress={onLongPress}
               style={styles.tabItem}
             >
-              {options.tabBarIcon && options.tabBarIcon({ 
-                focused: isFocused, 
-                color: isFocused ? '#FF6B00' : '#8E8E93', 
-                size: 24 
+              {options.tabBarIcon && options.tabBarIcon({
+                focused: isFocused,
+                color: isFocused ? '#FF6B00' : '#8E8E93',
+                size: 24
               })}
               <Text style={[styles.label, { color: isFocused ? '#FF6B00' : '#8E8E93' }]}>
                 {label as string}
@@ -91,7 +90,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     backgroundColor: 'transparent',
   },
   tabBar: {

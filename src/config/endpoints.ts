@@ -8,6 +8,7 @@ export const API_ENDPOINTS = {
   },
   PLANS: {
     USER_DETAILS: 'plans/user-details',
+    PHOTOGRAPHER: 'plans/photographer',
   },
   FACE: {
     STATUS: 'face/status',
@@ -23,6 +24,7 @@ export const API_ENDPOINTS = {
     PARTICIPANTS_MATCHED: (id: string | number) => `groups/${id}/participants-matched-photos`,
     PHOTO_DELETE_REQUESTS: (id: string | number) => `groups/${id}/photo-delete-requests`,
     VIDEO_DELETE_REQUESTS: (id: string | number) => `groups/${id}/video-delete-requests`,
+    REQUEST_DELETE_PHOTO: (id: string | number, photoId: string | number) => `groups/${id}/photos/${photoId}/delete-request`,
     FOLDERS: (id: string | number) => `groups/${id}/folders`,
     FOLDER_ACTION: (id: string | number, folderId: string | number) => `groups/${id}/folders/${folderId}`,
     VIEW_DOWNLOAD: (id: string | number) => `groups/${id}/settings/view-download`,
@@ -31,5 +33,22 @@ export const API_ENDPOINTS = {
   },
   USERS: {
     PROFILE: (id: string | number) => `users/${id}/profile`,
+  },
+  PHOTO_ACTIONS: {
+    LIKE: (id: string | number) => `photos/${id}/like`,
+    DOWNLOAD: (id: string | number) => `photos/${id}/download?no_watermark=1`,
+  },
+  PHOTOS: 'photos',
+  DOWNLOADS: {
+    HISTORY: 'downloads/history',
+  },
+  DASHBOARD: {
+    STATS: 'dashboard/stats',
+  },
+  WATERMARK: {
+    SETTINGS: 'watermark/settings',
+  },
+  BUSINESS: {
+    SETTINGS: 'business/settings',
   }
 };
