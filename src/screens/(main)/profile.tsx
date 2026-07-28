@@ -1,15 +1,77 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { BarChart2, BookOpen, Camera, CheckCircle, ChevronRight, HelpCircle, Link as LinkIcon, LogOut, Mail, MessageCircle, Phone, Settings, Shield, UserCircle2 } from 'lucide-react-native';
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDispatch, useSelector } from 'react-redux';
+import * as ImagePicker from 'expo-image-picker';
+import { useState } from 'react';
+import { useGetUserProfileQuery, useUpdateAvatarMutation } from '../../store/apiSlice';
+import { logout } from '../../store/slices/appSlice';
 import { router } from '../../utils/routerShim';
-import { Settings, BarChart2, HelpCircle, BookOpen, Shield, LogOut, ChevronRight, Mail, Phone, Link as LinkIcon, MessageCircle, CheckCircle } from 'lucide-react-native';
-import { useSelector } from 'react-redux';
-import { useGetUserProfileQuery } from '../../store/apiSlice';
+import { deleteItemAsync } from '../../utils/storage';
+import { toast } from '../../utils/toast';
 
 export default function PhotographerProfile() {
+  const dispatch = useDispatch();
   const userId = useSelector((state: any) => state.app.user?.id);
-  const { data, isLoading } = useGetUserProfileQuery(userId as string, { skip: !userId });
-  
+  const { data, isLoading, refetch } = useGetUserProfileQuery(userId as string, { skip: !userId });
+  const [updateAvatar, { isLoading: isUploadingAvatar }] = useUpdateAvatarMutation();
+  const [localAvatar, setLocalAvatar] = useState<string | null>(null);
+
   const user = data?.user;
+  const isPhotographer = user?.role === 'photographer';
+
+  const handleChangePhoto = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      toast.error('Permission Denied', 'Please allow access to your photo library.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: 'images',
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (result.canceled) return;
+
+    const asset = result.assets[0];
+    setLocalAvatar(asset.uri);
+
+    try {
+      const formData = new FormData();
+      const response = await fetch(asset.uri);
+      const blob = await response.blob();
+      formData.append('avatar', blob as any, asset.fileName || 'avatar.jpg');
+      formData.append('_method', 'PUT');
+      await updateAvatar(formData).unwrap();
+      toast.success('Photo Updated!', 'Your profile picture has been changed.');
+      refetch();
+    } catch (err) {
+      console.error(err);
+      setLocalAvatar(null);
+      toast.error('Upload Failed', 'Could not update your profile photo.');
+    }
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to log out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteItemAsync('userToken');
+            await deleteItemAsync('userRole');
+            await deleteItemAsync('userId');
+            dispatch(logout());
+          }
+        }
+      ]
+    );
+  };
 
   if (isLoading) {
     return (
@@ -25,13 +87,21 @@ export default function PhotographerProfile() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
-        
+
         {/* Modern Mobile Profile Header */}
         <View style={styles.header}>
-          <Image 
-            source={{ uri: user?.avatar || 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80' }} 
-            style={styles.avatar} 
-          />
+          <TouchableOpacity onPress={handleChangePhoto} activeOpacity={0.85} style={styles.avatarWrapper}>
+            <Image
+              source={{ uri: localAvatar || user?.avatar || 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80' }}
+              style={styles.avatar}
+            />
+            <View style={styles.avatarCameraBtn}>
+              {isUploadingAvatar
+                ? <ActivityIndicator size="small" color="#fff" />
+                : <Camera color="#fff" size={16} />
+              }
+            </View>
+          </TouchableOpacity>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Text style={styles.name}>{user?.name || 'Photographer'}</Text>
             {user?.is_verified === 1 && <CheckCircle color="#34C759" size={18} style={{ marginLeft: 6 }} />}
@@ -88,7 +158,7 @@ export default function PhotographerProfile() {
         </View>
 
         {/* Business Info Section */}
-        {user?.business?.showInfo && (
+        {isPhotographer && user?.business?.showInfo && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Business Info</Text>
             <View style={styles.card}>
@@ -101,7 +171,7 @@ export default function PhotographerProfile() {
                 </View>
               )}
               {user?.business?.name && (user?.business?.email || user?.business?.phone || user?.business?.website) && <View style={styles.divider} />}
-              
+
               {user?.business?.email && (
                 <View style={styles.row}>
                   <View style={[styles.iconBox, { backgroundColor: '#E3F2FD' }]}>
@@ -135,33 +205,45 @@ export default function PhotographerProfile() {
         )}
 
         {/* Native Mobile Settings List */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Manage</Text>
-          <View style={styles.card}>
-            <TouchableOpacity style={styles.row} onPress={() => router.push('/(photographer)/settings')}>
-              <View style={[styles.iconBox, { backgroundColor: '#F0F5FF' }]}>
-                <Settings color="#007AFF" size={20} />
-              </View>
-              <Text style={styles.rowText}>Business Settings</Text>
-              <ChevronRight color="#C7C7CC" size={20} />
-            </TouchableOpacity>
+        {isPhotographer && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Manage</Text>
+            <View style={styles.card}>
+              <TouchableOpacity style={styles.row} onPress={() => router.push('/(main)/business-profile')}>
+                <View style={[styles.iconBox, { backgroundColor: '#FFF0E6' }]}>
+                  <UserCircle2 color="#FF6B00" size={20} />
+                </View>
+                <Text style={styles.rowText}>My Profile</Text>
+                <ChevronRight color="#C7C7CC" size={20} />
+              </TouchableOpacity>
 
-            <View style={styles.divider} />
+              <View style={styles.divider} />
 
-            <TouchableOpacity style={styles.row}>
-              <View style={[styles.iconBox, { backgroundColor: '#E8F5E9' }]}>
-                <BarChart2 color="#34C759" size={20} />
-              </View>
-              <Text style={styles.rowText}>Analytics</Text>
-              <ChevronRight color="#C7C7CC" size={20} />
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.row} onPress={() => router.push('/(main)/settings')}>
+                <View style={[styles.iconBox, { backgroundColor: '#F0F5FF' }]}>
+                  <Settings color="#007AFF" size={20} />
+                </View>
+                <Text style={styles.rowText}>Business Settings</Text>
+                <ChevronRight color="#C7C7CC" size={20} />
+              </TouchableOpacity>
+
+              <View style={styles.divider} />
+
+              <TouchableOpacity style={styles.row} onPress={() => router.push('/(main)/analytics')}>
+                <View style={[styles.iconBox, { backgroundColor: '#E8F5E9' }]}>
+                  <BarChart2 color="#34C759" size={20} />
+                </View>
+                <Text style={styles.rowText}>Analytics</Text>
+                <ChevronRight color="#C7C7CC" size={20} />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Support & Privacy</Text>
           <View style={styles.card}>
-            <TouchableOpacity style={styles.row}>
+            <TouchableOpacity style={styles.row} onPress={() => router.push('/(main)/help')}>
               <View style={[styles.iconBox, { backgroundColor: '#FFF5E6' }]}>
                 <HelpCircle color="#FF9500" size={20} />
               </View>
@@ -171,7 +253,7 @@ export default function PhotographerProfile() {
 
             <View style={styles.divider} />
 
-            <TouchableOpacity style={styles.row}>
+            <TouchableOpacity style={styles.row} onPress={() => router.push('/(main)/tutorials')}>
               <View style={[styles.iconBox, { backgroundColor: '#FCE4EC' }]}>
                 <BookOpen color="#E91E63" size={20} />
               </View>
@@ -181,7 +263,7 @@ export default function PhotographerProfile() {
 
             <View style={styles.divider} />
 
-            <TouchableOpacity style={styles.row}>
+            <TouchableOpacity style={styles.row} onPress={() => router.push('/(main)/privacy')}>
               <View style={[styles.iconBox, { backgroundColor: '#E0F7FA' }]}>
                 <Shield color="#00BCD4" size={20} />
               </View>
@@ -191,7 +273,7 @@ export default function PhotographerProfile() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={() => router.replace('/(auth)/login')}>
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <LogOut color="#FF3B30" size={20} />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
@@ -205,12 +287,26 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F2F2F7' },
   container: { flex: 1, padding: 20 },
   header: { alignItems: 'center', marginBottom: 30, marginTop: 10 },
-  avatar: { width: 90, height: 90, borderRadius: 45, marginBottom: 15 },
+  avatar: { width: 90, height: 90, borderRadius: 45 },
+  avatarWrapper: { position: 'relative', marginBottom: 15 },
+  avatarCameraBtn: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#FF6B00',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#F2F2F7',
+  },
   name: { fontSize: 22, fontWeight: 'bold', color: '#000' },
   email: { fontSize: 15, color: '#8E8E93', marginTop: 4, marginBottom: 12 },
   badge: { backgroundColor: '#FF6B00', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 15 },
   badgeText: { color: '#fff', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase' },
-  
+
   section: { marginBottom: 25 },
   sectionTitle: { fontSize: 14, fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', marginLeft: 15, marginBottom: 8 },
   card: { backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden' },
@@ -218,7 +314,7 @@ const styles = StyleSheet.create({
   iconBox: { width: 32, height: 32, borderRadius: 8, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   rowText: { flex: 1, fontSize: 16, color: '#000' },
   divider: { height: 1, backgroundColor: '#E5E5EA', marginLeft: 62 },
-  
+
   logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', padding: 16, borderRadius: 12, marginTop: 10 },
   logoutText: { color: '#FF3B30', fontSize: 16, fontWeight: 'bold', marginLeft: 10 }
 });

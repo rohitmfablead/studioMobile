@@ -108,12 +108,97 @@ export interface Group {
   eventType: string | null;
   eventDate: string | null;
   description: string | null;
+  sortBy: string;
+  enableWatermark: boolean;
   coverImage: string | null;
   joinCode: string;
+  inviteCode: string;
+  invite_code: string;
+  inviteLink: string;
+  invite_link: string;
   memberCount: number;
   photoCount: number;
   createdAt: string;
   updatedAt: string;
+  owner?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    avatar: string | null;
+    role: string;
+    whatsappNumber: string | null;
+    logo: string | null;
+    businessName: string | null;
+    businessEmail: string | null;
+    businessPhone: string | null;
+    businessAddress: string | null;
+    businessWebsite: string | null;
+    socialLinks: any | null;
+    isVerified: number;
+    emailVerifiedAt: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+  privacy?: {
+    allowMemberEdit: boolean;
+    allowJoinByLink: boolean;
+    allowAnonymousView: boolean;
+    requireFaceVerification: boolean;
+    uploadPermission: string;
+  };
+  viewDownload?: {
+    allowDownloading: boolean;
+    enableSharing: boolean;
+    enableScreenshots: boolean;
+    downloadQuality: string;
+    bulkDownloads: boolean;
+    viewingPlatform: string;
+  };
+  participants?: any[];
+  team_members?: any[];
+  monetization?: {
+    enabled: boolean;
+    sellPhotos: boolean;
+    paidDownloads: boolean;
+    pricePerPhoto: number;
+    pricePerAlbum: number;
+    currency: string;
+    clientAlbumSelection: boolean;
+    maxSelections: number;
+    watermarkText: string;
+    enableClientFavorites: boolean;
+    allowDownloadFavorites: boolean;
+    allowShareFavorites: boolean;
+    autoNotifyFavorites: boolean;
+    maxFavoritesPerClient: number;
+  };
+  flipbook?: {
+    enabled: boolean;
+    autoPlay: boolean;
+    showPageNumbers: boolean;
+    animation: string;
+    backgroundColor: string;
+    backgroundMusic: string | null;
+  };
+  branding?: {
+    name: string | null;
+    logo: string | null;
+    show: boolean;
+    onLoginPage: boolean;
+  };
+  albumDownloadPin: string | null;
+  watermark?: {
+    type: string;
+    opacity: string;
+    tiled: boolean;
+    position: string;
+    scale: string;
+    image_url: string | null;
+  };
+  sponsors?: any[];
+  user_id?: number;
 }
 
 export interface UserProfileResponse {
@@ -192,6 +277,13 @@ export interface GetGroupPhotosResponse {
   };
 }
 
+export interface GetGroupVideosResponse {
+  success: boolean;
+  data: {
+    videos: any[];
+  };
+}
+
 export interface GetGroupDetailsResponse {
   success: boolean;
   group: Group & {
@@ -211,7 +303,7 @@ export interface GetGroupDetailsResponse {
 
 export const appApi = createApi({
   reducerPath: 'appApi',
-  tagTypes: ['Photos', 'GroupDetails', 'Downloads', 'VideoDeleteRequests', 'PhotoDeleteRequests'],
+  tagTypes: ['Groups', 'Photos', 'GroupDetails', 'Downloads', 'VideoDeleteRequests', 'PhotoDeleteRequests'],
   baseQuery: fetchBaseQuery({ 
     baseUrl: process.env.EXPO_PUBLIC_API_URL || 'https://fablead-studio.com/services/api/',
     prepareHeaders: (headers, { getState }) => {
@@ -229,6 +321,7 @@ export const appApi = createApi({
         url: API_ENDPOINTS.GROUPS.LIST,
         method: 'GET',
       }),
+      providesTags: ['Groups'],
     }),
     createGroup: builder.mutation<any, any>({
       query: (body) => ({
@@ -236,6 +329,7 @@ export const appApi = createApi({
         method: 'POST',
         body,
       }),
+      invalidatesTags: ['Groups'],
     }),
     joinGroup: builder.mutation<any, any>({
       query: (body) => ({
@@ -316,6 +410,24 @@ export const appApi = createApi({
         method: 'POST',
       }),
     }),
+    favoritePhoto: builder.mutation<any, string | number>({
+      query: (id) => ({
+        url: API_ENDPOINTS.PHOTO_ACTIONS.FAVORITE(id),
+        method: 'POST',
+      }),
+    }),
+    unlikePhoto: builder.mutation<any, string | number>({
+      query: (id) => ({
+        url: API_ENDPOINTS.PHOTO_ACTIONS.LIKE(id),
+        method: 'DELETE',
+      }),
+    }),
+    unfavoritePhoto: builder.mutation<any, string | number>({
+      query: (id) => ({
+        url: API_ENDPOINTS.PHOTO_ACTIONS.FAVORITE(id),
+        method: 'DELETE',
+      }),
+    }),
     addDownloadHistory: builder.mutation<any, any>({
       query: (body) => ({
         url: API_ENDPOINTS.DOWNLOADS.HISTORY,
@@ -342,8 +454,8 @@ export const appApi = createApi({
         method: 'GET',
         params,
       }),
-      serializeQueryArgs: ({ queryArgs }) => {
-        return queryArgs.id; // cache by group id
+      serializeQueryArgs: ({ endpointName, queryArgs }) => {
+        return `${endpointName}_${queryArgs.id}`; // cache by group id and endpoint
       },
       merge: (currentCache, newItems, otherArgs) => {
         if (otherArgs.arg.params?.page > 1) {
@@ -351,7 +463,29 @@ export const appApi = createApi({
             currentCache.data.photos.push(...newItems.data.photos);
           }
         } else {
-          currentCache.data = newItems.data;
+          return newItems;
+        }
+      },
+      forceRefetch({ currentArg, previousArg }) {
+        return currentArg?.params?.page !== previousArg?.params?.page;
+      },
+    }),
+    getGroupVideos: builder.query<GetGroupVideosResponse, { id: string | number; params?: any }>({
+      query: ({ id, params }) => ({
+        url: API_ENDPOINTS.GROUPS.VIDEOS(id),
+        method: 'GET',
+        params,
+      }),
+      serializeQueryArgs: ({ endpointName, queryArgs }) => {
+        return `${endpointName}_${queryArgs.id}`;
+      },
+      merge: (currentCache, newItems, otherArgs) => {
+        if (otherArgs.arg.params?.page > 1) {
+          if (newItems.data?.videos?.length) {
+            currentCache.data.videos.push(...newItems.data.videos);
+          }
+        } else {
+          return newItems;
         }
       },
       forceRefetch({ currentArg, previousArg }) {
@@ -501,6 +635,80 @@ export const appApi = createApi({
         }
       },
     }),
+    uploadVideos: builder.mutation<any, { 
+      id: string | number; 
+      assets: any[]; 
+      onProgress?: (progress: number) => void;
+    }>({
+      queryFn: async ({ id, assets, onProgress }, api) => {
+        try {
+          const state = api.getState() as any;
+          const token = state.app.token;
+          const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'https://fablead-studio.com/services/api/';
+          
+          const { Platform } = require('react-native');
+          const formData = new FormData();
+          
+          for (let i = 0; i < assets.length; i++) {
+            const asset = assets[i];
+            const fileName = asset.fileName || `video_${i}.mp4`;
+            const mimeType = asset.mimeType || 'video/mp4';
+            
+            if (Platform.OS === 'web') {
+              const res = await fetch(asset.uri);
+              const blob = await res.blob();
+              const file = new File([blob], fileName, { type: mimeType });
+              formData.append('files[]', file);
+            } else {
+              const fileObj = {
+                uri: String(asset.uri),
+                name: String(fileName),
+                type: String(mimeType),
+              };
+              formData.append('files[]', fileObj as any);
+            }
+          }
+
+          const result = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `${baseUrl}groups/${id}/videos/upload`);
+            if (token) xhr.setRequestHeader('authorization', `Bearer ${token}`);
+            
+            if (xhr.upload && onProgress) {
+              xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                  const percent = Math.round((event.loaded / event.total) * 100);
+                  onProgress(percent);
+                }
+              };
+            }
+            
+            xhr.onload = () => {
+              try {
+                const res = JSON.parse(xhr.responseText);
+                if (xhr.status >= 200 && xhr.status < 300) {
+                  resolve({ data: res });
+                } else {
+                  resolve({ error: { status: xhr.status, data: res } });
+                }
+              } catch(e) {
+                resolve({ error: { status: xhr.status, data: xhr.responseText } });
+              }
+            };
+            
+            xhr.onerror = () => {
+              reject(new Error('Network request failed'));
+            };
+            
+            xhr.send(formData as any);
+          });
+          
+          return result as any;
+        } catch (error: any) {
+          return { error: { status: 'FETCH_ERROR', error: String(error) } };
+        }
+      },
+    }),
     getGroupVideoDeleteRequests: builder.query<any, { id: string | number; params?: any }>({
       query: ({ id, params }) => ({
         url: API_ENDPOINTS.GROUPS.VIDEO_DELETE_REQUESTS(id),
@@ -562,6 +770,13 @@ export const appApi = createApi({
         method: 'GET',
       }),
     }),
+    updateAvatar: builder.mutation<any, FormData>({
+      query: (formData) => ({
+        url: API_ENDPOINTS.USERS.UPDATE_AVATAR,
+        method: 'POST',
+        body: formData,
+      }),
+    }),
   }),
 });
 
@@ -582,6 +797,7 @@ export const {
   useDeleteGroupMutation,
   useUpdateGroupViewDownloadSettingsMutation,
   useGetGroupPhotosQuery,
+  useGetGroupVideosQuery,
   useGetGroupParticipantsQuery,
   useMatchMyPhotosMutation,
   useGetGroupDownloadHistoryQuery,
@@ -593,9 +809,13 @@ export const {
   useUpdateGroupFolderMutation,
   useDeleteGroupFolderMutation,
   useUploadPhotosMutation,
+  useUploadVideosMutation,
   useRequestDeletePhotoMutation,
   useDeletePhotosMutation,
   useLikePhotoMutation,
+  useFavoritePhotoMutation,
+  useUnlikePhotoMutation,
+  useUnfavoritePhotoMutation,
   useAddDownloadHistoryMutation,
   useGetDashboardStatsQuery,
   useGetWatermarkSettingsQuery,
@@ -603,4 +823,5 @@ export const {
   useGetBusinessSettingsQuery,
   useUpdateBusinessSettingsMutation,
   useGetPhotographerPlansQuery,
+  useUpdateAvatarMutation,
 } = appApi;

@@ -1,4 +1,4 @@
-import { router } from '../utils/routerShim';
+import { router, useLocalSearchParams } from '../utils/routerShim';
 import { AlertCircle, ArrowRight, UserPlus, X } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, ImageBackground, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -6,7 +6,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useJoinGroupMutation } from '../store/apiSlice';
 
 export default function JoinEventScreen() {
-  const [code, setCode] = useState(['', '', '', '', '', '']);
+  const { id } = useLocalSearchParams();
+  const initialCode = typeof id === 'string' && id.length === 6 ? id.split('') : ['', '', '', '', '', ''];
+  const [code, setCode] = useState(initialCode.length === 6 ? initialCode : ['', '', '', '', '', '']);
   const [errorMessage, setErrorMessage] = useState('');
   const inputs = useRef<Array<TextInput | null>>([]);
   const insets = useSafeAreaInsets();
@@ -44,7 +46,7 @@ export default function JoinEventScreen() {
       }).unwrap();
 
       // Navigate to participant dashboard on success
-      router.replace('/(participant)/home');
+      router.replace('/(main)/dashboard');
 
     } catch (e: any) {
       console.error(e);

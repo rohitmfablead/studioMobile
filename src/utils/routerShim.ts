@@ -8,16 +8,18 @@ function parsePath(path: string | { pathname: string, params?: any }) {
 
   if (url.startsWith('/')) url = url.slice(1);
 
-  // Strip out layout groups like (photographer) or (participant)
-  url = url.replace(/^\(photographer\)\//, '');
-  url = url.replace(/^\(participant\)\//, '');
+  // Strip out layout groups
+  url = url.replace(/^\(main\)\//, '');
+  url = url.replace(/^\(auth\)\//, '');
 
   const parts = url.split('/');
 
   // Basic route mapping
   let routeName = url;
 
-  // Custom mappings for photographer
+  // Custom mappings
+  if (url === 'login') routeName = 'Login';
+  if (url === 'signup') routeName = 'Signup';
   if (url === 'business-profile') routeName = 'BusinessProfile';
   if (url === 'business-branding') routeName = 'BusinessBranding';
   if (url === 'portfolio-settings') routeName = 'PortfolioSettings';
@@ -31,7 +33,12 @@ function parsePath(path: string | { pathname: string, params?: any }) {
   if (url === 'analytics') routeName = 'Analytics';
   if (url === 'create-event') routeName = 'create-event';
   if (url === 'join-event') routeName = 'join-event';
-  if (url === 'dashboard') routeName = 'PhotographerTabs';
+  if (url === 'help') routeName = 'Help';
+  if (url === 'tutorials') routeName = 'Tutorials';
+  if (url === 'privacy') routeName = 'Privacy';
+  if (url === 'dashboard') routeName = 'MainTabs';
+  if (url === 'profile') routeName = 'Profile';
+  if (url === 'settings') routeName = 'Settings';
 
   if (parts[0] === 'event' && parts.length === 2) {
     routeName = 'EventDetails';

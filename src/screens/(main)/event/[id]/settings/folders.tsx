@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from '../../../../../utils/routerShim';
 import { ChevronLeft, FolderPlus, ArrowRightLeft, AlignJustify, Folder, MoreVertical } from 'lucide-react-native';
 import { useGetGroupFoldersQuery, useCreateGroupFolderMutation, useUpdateGroupFolderMutation, useDeleteGroupFolderMutation } from '../../../../../store/apiSlice';
+import { toast } from '../../../../../utils/toast';
 
 export default function FoldersSettings() {
   const { id } = useLocalSearchParams();
@@ -44,7 +45,7 @@ export default function FoldersSettings() {
       }
     } catch (err) {
       console.error('Failed to save folder:', err);
-      Alert.alert('Error', 'Failed to save folder');
+      toast.error('Error', 'Failed to save folder.');
     }
   };
 
@@ -77,7 +78,7 @@ export default function FoldersSettings() {
                     const res = await deleteGroupFolder({ id: id as string, folderId: folder.id }).unwrap();
                     if (res.success) refetch();
                   } catch (err) {
-                    Alert.alert('Error', 'Failed to delete folder');
+                    toast.error('Error', 'Failed to delete folder.');
                   }
                 }
               }

@@ -3,8 +3,12 @@ import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpaci
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGetDashboardStatsQuery } from '../../store/apiSlice';
 import { router } from '../../utils/routerShim';
+import { useSelector } from 'react-redux';
 
 export default function SettingsScreen() {
+  const user = useSelector((state: any) => state.app.user);
+  const isPhotographer = user?.role === 'photographer';
+  
   const { data, isLoading } = useGetDashboardStatsQuery();
   const stats = data?.stats;
   return (
@@ -12,7 +16,7 @@ export default function SettingsScreen() {
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
 
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Business Settings</Text>
+          <Text style={styles.headerTitle}>{isPhotographer ? 'Business Settings' : 'Settings'}</Text>
           <Text style={styles.headerSubtitle}>Manage your account and preferences</Text>
         </View>
 
@@ -22,7 +26,7 @@ export default function SettingsScreen() {
             <ActivityIndicator size="small" color="#007AFF" />
           </View>
         ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsScroll}>
+          <View style={styles.statsGrid}>
             <View style={styles.statCard}>
               <HardDrive color="#D97706" size={24} />
               <Text style={styles.statValue}>{stats?.storage?.usedFormatted || '0 B'}</Text>
@@ -36,18 +40,25 @@ export default function SettingsScreen() {
             <View style={styles.statCard}>
               <Calendar color="#16A34A" size={24} />
               <Text style={styles.statValue}>{stats?.subscription?.eventUsage?.used || 0}</Text>
-              <Text style={styles.statLabel}>of {stats?.subscription?.eventUsage?.limit || 0} Events</Text>
+              <Text style={styles.statLabel}>of {stats?.subscription?.eventUsage?.limit || 2} Events</Text>
+            </View>
+            <View style={styles.statCard}>
+              <UsersRound color="#F59E0B" size={24} />
+              <Text style={styles.statValue}>1</Text>
+              <Text style={styles.statLabel}>Albums Joined</Text>
             </View>
             <View style={styles.statCard}>
               <Zap color="#9333EA" size={24} />
               <Text style={styles.statValue}>{stats?.subscription?.activePlan || 'Essential'}</Text>
               <Text style={styles.statLabel}>Active Plan</Text>
             </View>
-          </ScrollView>
+          </View>
         )}
 
         {/* Settings Sections */}
-        <View style={styles.section}>
+        {isPhotographer ? (
+          <>
+            <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account & Business</Text>
           <View style={styles.card}>
             <TouchableOpacity style={styles.row} onPress={() => router.push('/business-profile')}>
@@ -126,12 +137,39 @@ export default function SettingsScreen() {
                 <Text style={[styles.rowSubtitle, { color: '#EA580C' }]}>⚠️ Uses more storage</Text>
               </View>
               <Switch value={stats?.settings?.resize_photo_images !== false} trackColor={{ true: '#34C759' }} disabled />
+              </View>
             </View>
           </View>
-        </View>
+        </>
+        ) : (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Account Settings</Text>
+            <View style={styles.card}>
+              <TouchableOpacity style={styles.row} onPress={() => router.push('/(main)/profile')}>
+                <View style={[styles.iconBox, { backgroundColor: '#EBF5FF' }]}><User color="#3B82F6" size={20} /></View>
+                <View style={styles.rowTextContainer}>
+                  <Text style={styles.rowTitle}>Profile</Text>
+                  <Text style={styles.rowSubtitle}>Personal info & security</Text>
+                </View>
+                <ChevronRight color="#C7C7CC" size={20} />
+              </TouchableOpacity>
+
+              <View style={styles.divider} />
+
+              <TouchableOpacity style={styles.row}>
+                <View style={[styles.iconBox, { backgroundColor: '#FFF0E5' }]}><Briefcase color="#FF6B00" size={20} /></View>
+                <View style={styles.rowTextContainer}>
+                  <Text style={styles.rowTitle}>Transactions</Text>
+                  <Text style={styles.rowSubtitle}>Invoice history & payments</Text>
+                </View>
+                <ChevronRight color="#C7C7CC" size={20} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Billing & Subscription</Text>
+          <Text style={styles.sectionTitle}>Billing & Payments</Text>
           <TouchableOpacity style={styles.subscriptionCard} onPress={() => router.push('/billing')}>
             <View style={styles.subHeader}>
               <Text style={styles.subTitle}>{stats?.subscription?.activePlan || 'Essential'} Plan</Text>
@@ -168,8 +206,8 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 24, fontWeight: '700', color: '#000' },
   headerSubtitle: { fontSize: 16, color: '#666', marginTop: 4 },
 
-  statsScroll: { paddingHorizontal: 15, paddingBottom: 25 },
-  statCard: { backgroundColor: '#fff', width: 140, padding: 15, borderRadius: 12, marginRight: 15, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 15, paddingBottom: 10 },
+  statCard: { backgroundColor: '#fff', width: '48%', padding: 15, borderRadius: 12, marginBottom: 15, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
   statValue: { fontSize: 20, fontWeight: 'bold', color: '#111', marginTop: 10 },
   statLabel: { fontSize: 13, color: '#8E8E93', marginTop: 4 },
 

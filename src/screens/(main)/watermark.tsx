@@ -1,12 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, ImageBackground, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, ImageBackground, Platform, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from '../../utils/routerShim';
 import { ChevronLeft, Check, Upload, Droplets, Grid3x3 } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { useGetWatermarkSettingsQuery, useSaveWatermarkSettingsMutation } from '../../store/apiSlice';
 import * as ImagePicker from 'expo-image-picker';
-import { Alert } from 'react-native';
-import { ActivityIndicator } from 'react-native';
+import { toast } from '../../utils/toast';
 
 export default function WatermarkScreen() {
   const insets = useSafeAreaInsets();
@@ -35,7 +34,7 @@ export default function WatermarkScreen() {
 
   const handleSave = async () => {
     if (!localFile && !imageUrl) {
-      Alert.alert('Validation Error', 'Please upload a watermark image first.');
+      toast.error('Validation Error', 'Please upload a watermark image first.');
       return;
     }
     
@@ -60,21 +59,19 @@ export default function WatermarkScreen() {
         if (Platform.OS === 'web' && localFile.file) {
           formData.append('watermark', localFile.file);
         } else {
-          formData.append('watermark', {
-            uri: localFile.uri,
-            name: localFile.fileName || 'watermark.png',
-            type: localFile.mimeType || 'image/png'
-          } as any);
+          const response = await fetch(localFile.uri);
+          const blob = await response.blob();
+          formData.append('watermark', blob as any, localFile.fileName || 'watermark.png');
         }
       }
       
       console.log("SAVING WATERMARK DATA: ", formData);
 
       await saveWatermarkSettings(formData).unwrap();
-      Alert.alert('Success', 'Watermark settings saved successfully!');
+      toast.success('Saved!', 'Watermark settings saved successfully.');
     } catch (err) {
       console.error(err);
-      Alert.alert('Error', 'Failed to save watermark settings.');
+      toast.error('Error', 'Failed to save watermark settings.');
     }
   };
 

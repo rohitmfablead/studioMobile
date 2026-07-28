@@ -13,7 +13,7 @@ export default function FaceRegistrationScreen() {
 
       <TouchableOpacity 
         style={styles.button}
-        onPress={() => router.replace('/(main)/home')}
+        onPress={() => router.replace('/(main)/dashboard')}
       >
         <Text style={styles.buttonText}>Capture & Save</Text>
       </TouchableOpacity>

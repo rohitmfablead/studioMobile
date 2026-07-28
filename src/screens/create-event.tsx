@@ -34,10 +34,15 @@ export default function CreateEventScreen() {
       allowsEditing: true,
       aspect: [16, 9],
       quality: 0.8,
+      base64: true,
     });
 
     if (!result.canceled) {
-      setCoverImage(result.assets[0].uri);
+      if (result.assets[0].base64) {
+        setCoverImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
+      } else {
+        setCoverImage(result.assets[0].uri);
+      }
     }
   };
 
@@ -49,35 +54,26 @@ export default function CreateEventScreen() {
     }
     
     try {
-      let dataToSubmit: any;
-      if (coverImage) {
-        const formData = new FormData();
-        formData.append('name', name);
-        formData.append('type', groupType);
-        formData.append('eventType', eventType);
-        formData.append('description', "");
-        formData.append('eventDate', "");
-        formData.append('location', "");
-        formData.append('is_platform', Platform.OS);
-        
-        formData.append('cover_image', {
-          uri: coverImage,
-          name: 'cover.jpg',
-          type: 'image/jpeg'
-        } as any);
+      const dataToSubmit: any = {
+        name,
+        type: groupType,
+        eventType,
+        description: "",
+        eventDate: "",
+        location: "",
+        is_platform: Platform.OS,
+        monetization: {
+          enabled: false,
+          pricePerPhoto: 0,
+          currency: "INR",
+          clientAlbumSelection: false,
+          maxSelections: 0,
+          watermarkText: ""
+        }
+      };
 
-        dataToSubmit = formData;
-      } else {
-        dataToSubmit = {
-          name,
-          type: groupType,
-          eventType,
-          description: "",
-          eventDate: "",
-          location: "",
-          is_platform: Platform.OS,
-          monetization: { enabled: false, pricePerPhoto: 0, currency: "INR" }
-        };
+      if (coverImage) {
+        dataToSubmit.cover_image = coverImage;
       }
       
       const res = await createGroup(dataToSubmit).unwrap();

@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from '../../../../../utils/routerShim';
 import { ChevronLeft, MessageCircle } from 'lucide-react-native';
 import React from 'react';
-import { ActivityIndicator, FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGetGroupParticipantsQuery } from '../../../../../store/apiSlice';
 
 export default function PhotographerChatParticipantList() {
@@ -9,9 +10,10 @@ export default function PhotographerChatParticipantList() {
   const { data, isLoading } = useGetGroupParticipantsQuery({ id: id as string, params: { page: 1, limit: 100 } });
   
   const participants = data?.data || [];
+  const insets = useSafeAreaInsets();
 
   const handleUserClick = (userId: string) => {
-    router.push(`/(photographer)/event/${id}/chat/${userId}`);
+    router.push(`/(main)/event/${id}/chat/${userId}`);
   };
 
   const renderItem = ({ item }: { item: any }) => (
@@ -32,7 +34,7 @@ export default function PhotographerChatParticipantList() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ChevronLeft color="#111" size={24} />
@@ -52,7 +54,7 @@ export default function PhotographerChatParticipantList() {
           contentContainerStyle={styles.listContainer}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 

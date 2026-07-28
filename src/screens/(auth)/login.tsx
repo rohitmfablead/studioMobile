@@ -86,9 +86,9 @@ export default function LoginScreen() {
         
         setRole(res.user.role as any);
         if (res.user.role === 'photographer') {
-          router.replace('/(photographer)/dashboard');
+          router.replace('/(main)/dashboard');
         } else {
-          router.replace('/(participant)/home');
+          router.replace('/(main)/dashboard');
         }
       }
     } catch (e) {
@@ -139,9 +139,9 @@ export default function LoginScreen() {
 
   const handleComplete = () => {
     if (role === 'photographer') {
-      router.replace('/(photographer)/dashboard');
+      router.replace('/(main)/dashboard');
     } else {
-      router.replace('/(participant)/home');
+      router.replace('/(main)/dashboard');
     }
   };
 

@@ -20,7 +20,7 @@ export default function PhotographerEventsScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity 
             style={styles.card}
-            onPress={() => router.push(`/(photographer)/event/${item.id}`)}
+            onPress={() => router.push(`/(main)/event/${item.id}`)}
           >
             <Image source={{ uri: item.cover }} style={styles.cover} />
             <View style={styles.info}>

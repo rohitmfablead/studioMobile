@@ -1,11 +1,16 @@
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
+import { User } from 'lucide-react-native';
 
 export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const focusedRoute = state.routes[state.index];
-  const VISIBLE_ON_TABS = ['dashboard', 'home', 'events', 'settings', 'profile', 'eventdetails'];
+  const VISIBLE_ON_TABS = ['dashboard', 'home', 'myphotos', 'settings', 'profile'];
+
+  // Read the logged-in user's avatar from Redux
+  const userAvatar = useSelector((s: any) => s.app.user?.avatar);
 
   // If the current screen is not a main tab, hide the entire tab bar
   if (!VISIBLE_ON_TABS.includes(focusedRoute.name.toLowerCase())) {
@@ -19,14 +24,13 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
           const { options } = descriptors[route.key];
 
           // STRICT WHITELIST: Only show these exact tabs.
-          // This prevents Expo Router from rendering every single sub-file as a tab.
-          const ALLOWED_TABS = ['dashboard', 'home', 'events', 'settings', 'profile'];
+          const ALLOWED_TABS = ['dashboard', 'home', 'myphotos', 'settings', 'profile'];
           if (!ALLOWED_TABS.includes(route.name.toLowerCase())) {
             return null;
           }
 
           // Expo router uses href: null to hide tabs
-          if (options.href === null) {
+          if ((options as any).href === null) {
             return null;
           }
 
@@ -38,6 +42,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
                 : route.name;
 
           const isFocused = state.index === index;
+          const isProfile = route.name.toLowerCase() === 'profile';
 
           const onPress = () => {
             const event = navigation.emit({
@@ -64,16 +69,30 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
               accessibilityRole="button"
               accessibilityState={isFocused ? { selected: true } : {}}
               accessibilityLabel={options.tabBarAccessibilityLabel}
-              testID={options.tabBarTestID}
               onPress={onPress}
               onLongPress={onLongPress}
               style={styles.tabItem}
             >
-              {options.tabBarIcon && options.tabBarIcon({
-                focused: isFocused,
-                color: isFocused ? '#FF6B00' : '#8E8E93',
-                size: 24
-              })}
+              {isProfile ? (
+                <View style={[styles.avatarRing, isFocused && styles.avatarRingActive]}>
+                  {userAvatar ? (
+                    <Image
+                      source={{ uri: userAvatar }}
+                      style={styles.avatarImg}
+                    />
+                  ) : (
+                    <View style={[styles.avatarFallback, isFocused && styles.avatarFallbackActive]}>
+                      <User color={isFocused ? '#fff' : '#8E8E93'} size={18} />
+                    </View>
+                  )}
+                </View>
+              ) : (
+                options.tabBarIcon && options.tabBarIcon({
+                  focused: isFocused,
+                  color: isFocused ? '#FF6B00' : '#8E8E93',
+                  size: 24
+                })
+              )}
               <Text style={[styles.label, { color: isFocused ? '#FF6B00' : '#8E8E93' }]}>
                 {label as string}
               </Text>
@@ -84,6 +103,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -118,5 +138,30 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     marginTop: 4,
-  }
+  },
+  avatarRing: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: '#E5E5EA',
+    overflow: 'hidden',
+  },
+  avatarRingActive: {
+    borderColor: '#FF6B00',
+  },
+  avatarImg: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarFallback: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#F2F2F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarFallbackActive: {
+    backgroundColor: '#FF6B00',
+  },
 });

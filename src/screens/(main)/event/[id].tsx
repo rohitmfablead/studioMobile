@@ -1,13 +1,15 @@
+import * as Clipboard from 'expo-clipboard';
 import * as FileSystem from 'expo-file-system';
 import { Image, ImageBackground } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { router, useLocalSearchParams } from '../../../utils/routerShim';
 import { Check, CheckSquare, ChevronDown, ChevronLeft, ChevronRight, Copy, Download, FolderOpen, Heart, Image as ImageIcon, LayoutGrid, Link as LinkIcon, MessageCircle, PlayCircle, Plus, QrCode, ScanFace, Settings, Share2, Trash2, Upload, UploadCloud, Users, Video, X } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Dimensions, FlatList, Modal, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Animated, Dimensions, FlatList, Linking, Modal, RefreshControl, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
-import { Photo, useAddDownloadHistoryMutation, useDeletePhotosMutation, useGetGroupDetailsQuery, useGetGroupFoldersQuery, useGetGroupParticipantsMatchedQuery, useGetGroupPhotoDeleteRequestsQuery, useGetGroupPhotosQuery, useGetGroupVideoDeleteRequestsQuery, useLikePhotoMutation, useMatchMyPhotosMutation, useRequestDeletePhotoMutation, useUploadPhotosMutation } from '../../../store/apiSlice';
+import { Photo, useAddDownloadHistoryMutation, useDeletePhotosMutation, useFavoritePhotoMutation, useGetGroupDetailsQuery, useGetGroupFoldersQuery, useGetGroupParticipantsMatchedQuery, useGetGroupPhotoDeleteRequestsQuery, useGetGroupPhotosQuery, useGetGroupVideoDeleteRequestsQuery, useGetGroupVideosQuery, useLikePhotoMutation, useMatchMyPhotosMutation, useRequestDeletePhotoMutation, useUnfavoritePhotoMutation, useUnlikePhotoMutation, useUploadPhotosMutation, useUploadVideosMutation } from '../../../store/apiSlice';
+import { router, useLocalSearchParams } from '../../../utils/routerShim';
+import { toast } from '../../../utils/toast';
 
 const { width } = Dimensions.get('window');
 
@@ -24,20 +26,83 @@ export default function PhotographerEventGallery() {
 
   const { data: photosData, isLoading: isPhotosLoading, isFetching: isPhotosFetching, refetch: refetchPhotos } = useGetGroupPhotosQuery({
     id: id as string,
-    params: { sortBy: 'created_at', sortOrder: 'desc', limit: 50, page }
+    params: { sortBy: 'created_at', sortOrder: 'desc', limit: 30, page }
   });
+  const { data: videosData, isLoading: isVideosLoading, refetch: refetchVideos } = useGetGroupVideosQuery(
+    { id: id as string, params: { page, limit: 30 } },
+    { skip: !id }
+  );
+
   const PHOTOS = photosData?.data?.photos || [];
-  const VIDEOS = PHOTOS.filter((p: any) => p.format === 'mp4' || p.format === 'mov');
+  const VIDEOS = videosData?.data?.videos || [];
+
+  useEffect(() => {
+    if (activeTab === 'videos') {
+      console.log('DEBUG VIDEOS DATA:', {
+        rawResponse: videosData,
+        extractedVideosLength: VIDEOS.length,
+        isLoading: isVideosLoading
+      });
+    }
+  }, [videosData, activeTab, isVideosLoading]);
 
   useEffect(() => {
     isFetchingRef.current = isPhotosFetching;
   }, [isPhotosFetching]);
 
   const [activeTab, setActiveTab] = useState('all');
+  const tabsScrollRef = useRef<ScrollView>(null);
+  const [scrollViewWidth, setScrollViewWidth] = useState(0);
+  const tabMeasurements = useRef<{ [key: string]: { x: number, width: number } }>({}).current;
+
+  const handleTabLayout = (tabKey: string, event: any) => {
+    const { x, width } = event.nativeEvent.layout;
+    tabMeasurements[tabKey] = { x, width };
+    if (activeTab === tabKey && scrollViewWidth) {
+      const scrollPosition = x + (width / 2) - (scrollViewWidth / 2);
+      tabsScrollRef.current?.scrollTo({ x: Math.max(0, scrollPosition), animated: true });
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab && tabMeasurements[activeTab] && scrollViewWidth) {
+      const { x, width } = tabMeasurements[activeTab];
+      const scrollPosition = x + (width / 2) - (scrollViewWidth / 2);
+      tabsScrollRef.current?.scrollTo({ x: Math.max(0, scrollPosition), animated: true });
+    }
+  }, [activeTab, scrollViewWidth]);
   const [isSelecting, setIsSelecting] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
+  const shareUrl = group?.inviteLink || group?.invite_link || `https://fablead-studio.com/join/${id}`;
+  const shareCode = group?.joinCode || group?.inviteCode || group?.invite_code || id;
+
+  const handleCopyLink = async () => {
+    await Clipboard.setStringAsync(shareUrl);
+    toast.success('Link Copied!', 'Share link copied to clipboard.');
+  };
+
+  const handleCopyCode = async () => {
+    await Clipboard.setStringAsync(shareCode as string);
+    toast.success('Code Copied!', 'Join code copied to clipboard.');
+  };
+
+  const handleShareLink = async () => {
+    try {
+      await Share.share({
+        message: `Join our photo gallery on FabStudio! Link: ${shareUrl} or use code: ${shareCode}`,
+        url: shareUrl,
+        title: `Join ${group?.name || 'Group'}`
+      });
+    } catch (error: any) {
+      toast.error('Share Failed', error.message);
+    }
+  };
+
   const [likePhoto] = useLikePhotoMutation();
+  const [favoritePhoto] = useFavoritePhotoMutation();
+  const [unlikePhoto] = useUnlikePhotoMutation();
+  const [unfavoritePhoto] = useUnfavoritePhotoMutation();
   const [addDownloadHistory] = useAddDownloadHistoryMutation();
   const [deletePhotos] = useDeletePhotosMutation();
   const [requestDeletePhoto] = useRequestDeletePhotoMutation();
@@ -52,21 +117,61 @@ export default function PhotographerEventGallery() {
           text: "Submit Request",
           onPress: async (reason) => {
             if (!reason) {
-              Alert.alert("Error", "A reason is required to submit a delete request.");
+              toast.error('Error', 'A reason is required to submit a delete request.');
               return;
             }
             try {
               await requestDeletePhoto({ id: id as string, photoId: photoId.toString(), reason }).unwrap();
-              Alert.alert("Success", "Delete request submitted successfully!");
+              toast.success('Submitted', 'Delete request submitted successfully!');
             } catch (err) {
               console.error(err);
-              Alert.alert("Error", "Failed to submit delete request.");
+              toast.error('Error', 'Failed to submit delete request.');
             }
           }
         }
       ],
       "plain-text"
     );
+  };
+
+  const handleLikeSelected = async () => {
+    if (selectedPhotos.length === 0) return;
+    try {
+      await Promise.all(selectedPhotos.map(async (photoId) => {
+        const results = await Promise.allSettled([
+          likePhoto(photoId).unwrap(),
+          favoritePhoto(photoId).unwrap()
+        ]);
+        console.log(`LIKE results for photo ${photoId}:`, results);
+      }));
+      toast.success('Liked!', 'Selected photos liked successfully.');
+      setSelectedPhotos([]);
+      setIsSelecting(false);
+      refetchPhotos();
+    } catch (err) {
+      console.error(err);
+      toast.error('Error', 'Failed to like some photos.');
+    }
+  };
+
+  const handleUnlikeSelected = async () => {
+    if (selectedPhotos.length === 0) return;
+    try {
+      await Promise.all(selectedPhotos.map(async (photoId) => {
+        const results = await Promise.allSettled([
+          unlikePhoto(photoId).unwrap(),
+          unfavoritePhoto(photoId).unwrap()
+        ]);
+        console.log(`UNLIKE results for photo ${photoId}:`, results);
+      }));
+      toast.success('Unliked!', 'Selected photos unliked successfully.');
+      setSelectedPhotos([]);
+      setIsSelecting(false);
+      refetchPhotos();
+    } catch (err) {
+      console.error(err);
+      toast.error('Error', 'Failed to unlike some photos.');
+    }
   };
 
   const handleDeleteSelected = () => {
@@ -83,13 +188,13 @@ export default function PhotographerEventGallery() {
           onPress: async () => {
             try {
               await deletePhotos({ photoIds: selectedPhotos.map(String) }).unwrap();
-              Alert.alert("Success", "Photos deleted successfully");
+              toast.success('Deleted!', 'Photos deleted successfully.');
               setSelectedPhotos([]);
               setIsSelecting(false);
               refetchPhotos();
             } catch (err) {
               console.error(err);
-              Alert.alert("Error", "Failed to delete photos");
+              toast.error('Error', 'Failed to delete photos.');
             }
           }
         }
@@ -98,11 +203,28 @@ export default function PhotographerEventGallery() {
   };
 
   const handleLikePhoto = async (photoId: number) => {
+    const photo = PHOTOS.find((p: any) => p.id === photoId);
+    if (!photo) return;
+    const isCurrentlyLiked = photo.isLiked || photo.liked || photo.likes_count > 0;
+
     try {
-      await likePhoto(photoId).unwrap();
+      if (isCurrentlyLiked) {
+        const results = await Promise.allSettled([
+          unlikePhoto(photoId).unwrap(),
+          unfavoritePhoto(photoId).unwrap()
+        ]);
+        console.log(`UNLIKE single photo ${photoId} results:`, results);
+      } else {
+        const results = await Promise.allSettled([
+          likePhoto(photoId).unwrap(),
+          favoritePhoto(photoId).unwrap()
+        ]);
+        console.log(`LIKE single photo ${photoId} results:`, results);
+      }
       refetchPhotos();
     } catch (e) {
       console.error(e);
+      toast.error('Error', 'Failed to update like status.');
     }
   };
 
@@ -129,7 +251,7 @@ export default function PhotographerEventGallery() {
         download_type: 'unique'
       }).unwrap();
 
-      Alert.alert('Success', 'File downloaded successfully to your device gallery!');
+      toast.success('Downloaded!', 'File saved to your device gallery.');
     } catch (e) {
       console.log('Native download failed, falling back to web', e);
       import('react-native').then(RN => RN.Linking.openURL(downloadUrl));
@@ -190,9 +312,10 @@ export default function PhotographerEventGallery() {
   const deleteRequests = [...(photoDeleteRes?.data || []), ...(videoDeleteRes?.data || [])];
   const isLoadingDelete = loadingPhotoDelete || loadingVideoDelete;
 
-  const isLoading = isDetailsLoading || isPhotosLoading;
+  const isLoading = isDetailsLoading || isPhotosLoading || isVideosLoading;
 
   const [uploadPhotosMutation] = useUploadPhotosMutation();
+  const [uploadVideosMutation] = useUploadVideosMutation();
   const insets = useSafeAreaInsets();
   const [selectedUploadAssets, setSelectedUploadAssets] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -217,28 +340,32 @@ export default function PhotographerEventGallery() {
     setBulkProgress(0);
 
     try {
-      const res = await uploadPhotosMutation({
+      const uploadPayload = {
         id: id as string,
         assets: selectedUploadAssets,
         enable_watermark: '0',
         no_watermark: '1',
         is_platform: 'mobile',
-        onProgress: (p) => setBulkProgress(p)
-      }).unwrap();
+        onProgress: (p: number) => setBulkProgress(p)
+      };
+
+      const res = await (uploadType === 'videos'
+        ? uploadVideosMutation(uploadPayload).unwrap()
+        : uploadPhotosMutation(uploadPayload).unwrap());
 
       if (!res.error) {
         setSelectedUploadAssets([]);
         setShowUploadModal(false);
         setBulkProgress(null);
-        refetchPhotos();
+        if (uploadType === 'videos') refetchVideos();
+        else refetchPhotos();
       } else {
-        alert('Some photos failed to upload. Please try again.');
+        alert(`Some ${uploadType === 'videos' ? 'videos' : 'photos'} failed to upload. Please try again.`);
         setBulkProgress(null);
-        refetchPhotos();
       }
-    } catch (err) {
-      console.error('Upload Failed', err);
-      alert('Upload failed. Please try again.');
+    } catch (error) {
+      console.error("Upload error: ", error);
+      alert(`Failed to upload ${uploadType === 'videos' ? 'videos' : 'photos'}.`);
       setBulkProgress(null);
     }
 
@@ -251,6 +378,7 @@ export default function PhotographerEventGallery() {
       await Promise.all([
         refetchDetails(),
         refetchPhotos(),
+        refetchVideos(),
         activeTab === 'participants' ? refetchParticipants() : Promise.resolve(),
         activeTab === 'delete' ? Promise.all([refetchPhotoDelete(), refetchVideoDelete()]) : Promise.resolve()
       ]);
@@ -273,21 +401,31 @@ export default function PhotographerEventGallery() {
     const isSelected = selectedPhotos.includes(item.id);
     return (
       <TouchableOpacity
-        style={{ flex: 1 / 3, padding: 1, position: 'relative' }}
+        style={{ flex: 1 / 2, padding: 1, position: 'relative' }}
         onPress={() => {
           if (isSelecting) {
             toggleSelection(item.id);
           } else {
-            const idx = PHOTOS.findIndex((p) => p.id === item.id);
-            if (idx !== -1) setPreviewIndex(idx);
+            if (isVideo) {
+              Linking.openURL(item.url).catch(err => {
+                console.error("Failed to play video: ", err);
+                Alert.alert("Error", "Could not play this video.");
+              });
+            } else {
+              const idx = PHOTOS.findIndex((p) => p.id === item.id);
+              if (idx !== -1) setPreviewIndex(idx);
+            }
           }
         }}
       >
-        <Image source={{ uri: item.thumbnail_url || item.url }} style={{ width: '100%', aspectRatio: 1, backgroundColor: '#eee' }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
-
-        {isVideo && (
-          <View style={styles.videoPlayOverlay}><PlayCircle color="#fff" size={24} /></View>
-        )}
+        <View style={{ width: '100%', aspectRatio: 1, backgroundColor: '#eee', overflow: 'hidden' }}>
+          <Image source={{ uri: item.thumbnail_url || item.url }} style={{ width: '100%', height: '100%' }} contentFit="cover" transition={200} cachePolicy="memory-disk" />
+          {isVideo && (
+            <View style={styles.videoPlayOverlay}>
+              <PlayCircle color="#fff" size={40} style={{ opacity: 0.9 }} strokeWidth={1.5} />
+            </View>
+          )}
+        </View>
 
         {isSelecting && (
           <View style={[styles.checkboxOverlay, isSelected && styles.checkboxOverlayActive]}>
@@ -304,7 +442,8 @@ export default function PhotographerEventGallery() {
                 style={[styles.photoActionMicroBtn, { width: 'auto', paddingHorizontal: 8, flexDirection: 'row', gap: 4 }]}
                 onPress={() => handleLikePhoto(item.id)}
               >
-                <Heart color={item.isLiked ? "#FF3B30" : "#fff"} fill={item.isLiked ? "#FF3B30" : "transparent"} size={12} />
+                <Heart color={(item.isLiked || item.liked || item.likes_count > 0) ? "#FF3B30" : "#fff"} fill={(item.isLiked || item.liked || item.likes_count > 0) ? "#FF3B30" : "transparent"} size={12} />
+                {item.likes_count > 0 && <Text style={{ color: '#fff', fontSize: 10, fontWeight: 'bold' }}>{item.likes_count}</Text>}
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.photoActionMicroBtn, { width: 'auto', paddingHorizontal: 8, flexDirection: 'row', gap: 4 }]}
@@ -362,10 +501,28 @@ export default function PhotographerEventGallery() {
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.floatingHeader, { opacity: headerOpacity, paddingTop: insets.top }]}>
-        <TouchableOpacity style={styles.floatingBackBtn} onPress={() => router.back()}>
-          <ChevronLeft color="#111" size={24} />
-        </TouchableOpacity>
-        <Text style={styles.floatingTitle}>{group?.name || 'Loading...'}</Text>
+        <View style={styles.floatingHeaderContent}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity style={[styles.floatingBackBtn, styles.headerIconBg]} onPress={() => router.back()}>
+              <ChevronLeft color="#111" size={24} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.headerCenter} pointerEvents="none">
+            <Text style={styles.floatingTitle} numberOfLines={1}>{group?.name || 'Loading...'}</Text>
+          </View>
+
+          <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.headerIconBg} onPress={() => setShowShareModal(true)}>
+              <Share2 color="#111" size={18} />
+            </TouchableOpacity>
+            {isOwner && (
+              <TouchableOpacity style={styles.headerIconBg} onPress={() => router.push(`/(main)/event/${id}/settings`)}>
+                <Settings color="#111" size={18} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
       </Animated.View>
 
       {isLoading ? (
@@ -401,8 +558,8 @@ export default function PhotographerEventGallery() {
 
             {/* Main Action Bar (Select, Share, Settings, Chat) */}
             <View style={styles.iconActionBar}>
-              <TouchableOpacity 
-                style={[styles.actionItem, PHOTOS.length === 0 && { opacity: 0.3 }]} 
+              <TouchableOpacity
+                style={[styles.actionItem, PHOTOS.length === 0 && { opacity: 0.3 }]}
                 onPress={() => { setIsSelecting(!isSelecting); setSelectedPhotos([]); }}
                 disabled={PHOTOS.length === 0}
               >
@@ -416,8 +573,8 @@ export default function PhotographerEventGallery() {
               )}
 
               {isOwner && (
-                <TouchableOpacity 
-                  style={[styles.actionItem, PHOTOS.length === 0 && { opacity: 0.3 }]} 
+                <TouchableOpacity
+                  style={[styles.actionItem, PHOTOS.length === 0 && { opacity: 0.3 }]}
                   onPress={() => setShowDownloadConfirmModal(true)}
                   disabled={PHOTOS.length === 0}
                 >
@@ -427,11 +584,11 @@ export default function PhotographerEventGallery() {
               <TouchableOpacity style={styles.actionItem} onPress={() => setShowShareModal(true)}>
                 <View style={styles.actionCircle}><Share2 color="#111" size={22} /></View>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.actionItem} onPress={() => router.push(`/(photographer)/event/${id}/chat`)}>
+              <TouchableOpacity style={styles.actionItem} onPress={() => router.push(`/(main)/event/${id}/chat`)}>
                 <View style={styles.actionCircle}><MessageCircle color="#111" size={22} /></View>
               </TouchableOpacity>
               {isOwner && (
-                <TouchableOpacity style={styles.actionItem} onPress={() => router.push(`/(photographer)/event/${id}/settings`)}>
+                <TouchableOpacity style={styles.actionItem} onPress={() => router.push(`/(main)/event/${id}/settings`)}>
                   <View style={styles.actionCircle}><Settings color="#111" size={22} /></View>
                 </TouchableOpacity>
               )}
@@ -440,40 +597,50 @@ export default function PhotographerEventGallery() {
             {/* Scrollable Tabs */}
             {PHOTOS.length > 0 && (
               <View style={styles.tabWrapper}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabContainer}>
-                <TouchableOpacity style={[styles.tab, activeTab === 'all' && styles.activeTab]} onPress={() => setActiveTab('all')}>
-                  <LayoutGrid color={activeTab === 'all' ? "#fff" : "#666"} size={16} />
-                  <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>All Photos</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.tab, activeTab === 'my-photos' && styles.activeTab]} onPress={() => setActiveTab('my-photos')}>
-                  <ImageIcon color={activeTab === 'my-photos' ? "#fff" : "#666"} size={16} />
-                  <Text style={[styles.tabText, activeTab === 'my-photos' && styles.activeTabText]}>My Photos</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.tab, activeTab === 'participants' && styles.activeTab]} onPress={() => setActiveTab('participants')}>
-                  <Users color={activeTab === 'participants' ? "#fff" : "#666"} size={16} />
-                  <Text style={[styles.tabText, activeTab === 'participants' && styles.activeTabText]}>Participants</Text>
-                </TouchableOpacity>
-                {foldersError && (
-                  <View style={[styles.tab, { backgroundColor: '#FFE4E6' }]}>
-                    <Text style={{ color: '#E11D48', fontSize: 12 }}>Folder Auth Error (401)</Text>
-                  </View>
-                )}
-                {folders.map((folder: any) => (
-                  <TouchableOpacity key={folder.id} style={[styles.tab, activeTab === `folder_${folder.id}` && styles.activeTab]} onPress={() => setActiveTab(`folder_${folder.id}`)}>
-                    <FolderOpen color={activeTab === `folder_${folder.id}` ? "#fff" : "#666"} size={16} />
-                    <Text style={[styles.tabText, activeTab === `folder_${folder.id}` && styles.activeTabText]}>{folder.name}</Text>
+                <ScrollView
+                  ref={tabsScrollRef}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.tabContainer}
+                  onLayout={(e) => setScrollViewWidth(e.nativeEvent.layout.width)}
+                >
+                  <TouchableOpacity style={[styles.tab, activeTab === 'all' && styles.activeTab]} onPress={() => setActiveTab('all')} onLayout={(e) => handleTabLayout('all', e)}>
+                    <LayoutGrid color={activeTab === 'all' ? "#fff" : "#666"} size={16} />
+                    <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>All Photos</Text>
                   </TouchableOpacity>
-                ))}
-                <TouchableOpacity style={[styles.tab, activeTab === 'videos' && styles.activeTab]} onPress={() => setActiveTab('videos')}>
-                  <Video color={activeTab === 'videos' ? "#fff" : "#666"} size={16} />
-                  <Text style={[styles.tabText, activeTab === 'videos' && styles.activeTabText]}>Videos</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.tab, activeTab === 'delete' && styles.activeTab]} onPress={() => setActiveTab('delete')}>
-                  <Trash2 color={activeTab === 'delete' ? "#fff" : "#666"} size={16} />
-                  <Text style={[styles.tabText, activeTab === 'delete' && styles.activeTabText]}>Delete Requests</Text>
-                </TouchableOpacity>
-              </ScrollView>
-            </View>
+                  <TouchableOpacity style={[styles.tab, activeTab === 'liked' && styles.activeTab]} onPress={() => setActiveTab('liked')} onLayout={(e) => handleTabLayout('liked', e)}>
+                    <Heart color={activeTab === 'liked' ? "#fff" : "#666"} size={16} />
+                    <Text style={[styles.tabText, activeTab === 'liked' && styles.activeTabText]}>Liked</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.tab, activeTab === 'my-photos' && styles.activeTab]} onPress={() => setActiveTab('my-photos')} onLayout={(e) => handleTabLayout('my-photos', e)}>
+                    <ImageIcon color={activeTab === 'my-photos' ? "#fff" : "#666"} size={16} />
+                    <Text style={[styles.tabText, activeTab === 'my-photos' && styles.activeTabText]}>My Photos</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.tab, activeTab === 'participants' && styles.activeTab]} onPress={() => setActiveTab('participants')} onLayout={(e) => handleTabLayout('participants', e)}>
+                    <Users color={activeTab === 'participants' ? "#fff" : "#666"} size={16} />
+                    <Text style={[styles.tabText, activeTab === 'participants' && styles.activeTabText]}>Participants</Text>
+                  </TouchableOpacity>
+                  {foldersError && (
+                    <View style={[styles.tab, { backgroundColor: '#FFE4E6' }]}>
+                      <Text style={{ color: '#E11D48', fontSize: 12 }}>Folder Auth Error (401)</Text>
+                    </View>
+                  )}
+                  {folders.map((folder: any) => (
+                    <TouchableOpacity key={folder.id} style={[styles.tab, activeTab === `folder_${folder.id}` && styles.activeTab]} onPress={() => setActiveTab(`folder_${folder.id}`)} onLayout={(e) => handleTabLayout(`folder_${folder.id}`, e)}>
+                      <FolderOpen color={activeTab === `folder_${folder.id}` ? "#fff" : "#666"} size={16} />
+                      <Text style={[styles.tabText, activeTab === `folder_${folder.id}` && styles.activeTabText]}>{folder.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                  <TouchableOpacity style={[styles.tab, activeTab === 'videos' && styles.activeTab]} onPress={() => setActiveTab('videos')} onLayout={(e) => handleTabLayout('videos', e)}>
+                    <Video color={activeTab === 'videos' ? "#fff" : "#666"} size={16} />
+                    <Text style={[styles.tabText, activeTab === 'videos' && styles.activeTabText]}>Videos</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.tab, activeTab === 'delete' && styles.activeTab]} onPress={() => setActiveTab('delete')} onLayout={(e) => handleTabLayout('delete', e)}>
+                    <Trash2 color={activeTab === 'delete' ? "#fff" : "#666"} size={16} />
+                    <Text style={[styles.tabText, activeTab === 'delete' && styles.activeTabText]}>Delete Requests</Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
             )}
 
             {/* Grid Content */}
@@ -493,7 +660,7 @@ export default function PhotographerEventGallery() {
                   <>
                     <FlatList
                       data={PHOTOS.slice(0, renderLimit)}
-                      numColumns={3}
+                      numColumns={2}
                       scrollEnabled={false}
                       keyExtractor={(item) => item.id.toString()}
                       renderItem={(props) => renderPhotoItem(props)}
@@ -505,6 +672,34 @@ export default function PhotographerEventGallery() {
                     )}
                   </>
                 )
+              )}
+
+              {activeTab === 'liked' && (
+                (() => {
+                  const likedPhotos = PHOTOS.filter((p: any) => p.isLiked || p.liked || p.likes_count > 0);
+                  console.log("DEBUG LIKED PHOTOS - Total PHOTOS:", PHOTOS.length, "Liked count:", likedPhotos.length);
+                  if (PHOTOS.length > 0) {
+                    console.log("Entire First Photo Object from API:", JSON.stringify(PHOTOS[0], null, 2));
+                  }
+
+                  return likedPhotos.length === 0 ? (
+                    <View style={styles.emptyState}>
+                      <Heart color="#ccc" size={48} style={{ marginBottom: 16 }} />
+                      <Text style={styles.emptyTitle}>No Liked Photos</Text>
+                      <Text style={styles.emptySub}>Photos you or participants like will appear here.</Text>
+                    </View>
+                  ) : (
+                    <>
+                      <FlatList
+                        data={likedPhotos.slice(0, renderLimit)}
+                        numColumns={2}
+                        scrollEnabled={false}
+                        keyExtractor={(item) => item.id.toString()}
+                        renderItem={(props) => renderPhotoItem(props)}
+                      />
+                    </>
+                  );
+                })()
               )}
 
               {activeTab === 'my-photos' && (
@@ -533,7 +728,7 @@ export default function PhotographerEventGallery() {
                   {matchedPhotos.length > 0 ? (
                     <FlatList
                       data={matchedPhotos}
-                      numColumns={3}
+                      numColumns={2}
                       scrollEnabled={false}
                       keyExtractor={(item) => item.id.toString()}
                       renderItem={(props) => renderPhotoItem(props)}
@@ -571,7 +766,7 @@ export default function PhotographerEventGallery() {
               {activeTab === 'videos' && (
                 <FlatList
                   data={VIDEOS}
-                  numColumns={3}
+                  numColumns={2}
                   scrollEnabled={false}
                   keyExtractor={(item: any) => item.id.toString()}
                   renderItem={({ item }) => renderPhotoItem({ item, isVideo: true })}
@@ -630,20 +825,20 @@ export default function PhotographerEventGallery() {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.selectionActions, { paddingRight: 15 }]}>
                   {selectedPhotos.length === PHOTOS.length ? (
                     <TouchableOpacity style={styles.selBtn} onPress={() => setSelectedPhotos([])}>
-                      <Text style={styles.selBtnText}>Deselect All</Text>
+                      <Text style={styles.selBtnText}>Deselect All ({PHOTOS.length})</Text>
                     </TouchableOpacity>
                   ) : (
                     <TouchableOpacity style={styles.selBtn} onPress={handleSelectAll}>
-                      <Text style={styles.selBtnText}>Select All</Text>
+                      <Text style={styles.selBtnText}>Select All ({PHOTOS.length})</Text>
                     </TouchableOpacity>
                   )}
-                  <TouchableOpacity style={styles.selBtn}>
+                  <TouchableOpacity style={styles.selBtn} onPress={handleLikeSelected}>
                     <Text style={styles.selBtnText}>Favorite</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.selBtn}>
-                    <Text style={styles.selBtnText}>Download</Text>
+                  <TouchableOpacity style={styles.selBtn} onPress={handleUnlikeSelected}>
+                    <Text style={styles.selBtnText}>Unlike</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.selBtn}>
+                  <TouchableOpacity style={styles.selBtn} onPress={handleDeleteSelected}>
                     <Text style={[styles.selBtnText, { color: '#FF3B30' }]}>Delete</Text>
                   </TouchableOpacity>
                 </ScrollView>
@@ -693,12 +888,12 @@ export default function PhotographerEventGallery() {
                 </View>
 
                 <View style={styles.shareActionRow}>
-                  <TouchableOpacity style={styles.shareActionBtn}>
+                  <TouchableOpacity style={styles.shareActionBtn} onPress={handleCopyLink}>
                     <LinkIcon color="#FF6B00" size={18} />
                     <Text style={styles.shareActionText}>Copy Link</Text>
                     <Copy color="#666" size={14} style={{ marginLeft: 6 }} />
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.shareActionBtn}>
+                  <TouchableOpacity style={styles.shareActionBtn} onPress={handleCopyCode}>
                     <Users color="#FF6B00" size={18} />
                     <Text style={styles.shareActionText}>Copy Code</Text>
                     <Copy color="#666" size={14} style={{ marginLeft: 6 }} />
@@ -732,14 +927,14 @@ export default function PhotographerEventGallery() {
                 </View>
 
                 <View style={styles.urlBox}>
-                  <Text style={styles.urlText} numberOfLines={1}>https://fablead-studio.com/join/T7TVEO</Text>
-                  <TouchableOpacity style={styles.copyBox}>
+                  <Text style={styles.urlText} numberOfLines={1}>{shareUrl}</Text>
+                  <TouchableOpacity style={styles.copyBox} onPress={handleCopyLink}>
                     <Copy color="#666" size={18} />
                   </TouchableOpacity>
                 </View>
 
                 <View style={styles.qrActionsRow}>
-                  <TouchableOpacity style={styles.qrShareBtn}>
+                  <TouchableOpacity style={styles.qrShareBtn} onPress={handleShareLink}>
                     <Share2 color="#fff" size={18} />
                     <Text style={styles.qrShareBtnText}>Share Link</Text>
                   </TouchableOpacity>
@@ -886,20 +1081,20 @@ export default function PhotographerEventGallery() {
 
                   {selectedUploadAssets.length > 0 ? (
                     <View style={[styles.uploadDropZone, { alignItems: 'stretch', paddingHorizontal: 0, paddingVertical: 0 }]}>
-                      <ScrollView 
+                      <ScrollView
                         showsVerticalScrollIndicator={true}
                         style={{ width: '100%', maxHeight: 300 }}
                       >
                         {selectedUploadAssets.map((asset, index) => {
                           const fileName = asset.fileName || asset.uri.split('/').pop() || `photo_${index + 1}.jpg`;
                           const fileSize = asset.fileSize ? (asset.fileSize / 1024).toFixed(2) + ' KB' : '';
-                          
+
                           return (
                             <View key={index} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#F8F9FA' }}>
                               <Text style={{ flex: 1, color: '#105B9C', fontSize: 14, fontWeight: '600' }} numberOfLines={1}>{fileName}</Text>
-                              
+
                               <Text style={{ color: '#6B7280', fontSize: 13, marginRight: 24 }}>{fileSize}</Text>
-                              
+
                               <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
                                 <Text style={{ color: isUploading ? '#FF6B00' : '#6B7280', fontSize: 11, fontWeight: '700', letterSpacing: 0.5, marginRight: 10 }}>UPLOAD</Text>
                                 <View style={{ width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: isUploading ? '#FF6B00' : '#D1D5DB', overflow: 'hidden', justifyContent: 'flex-end' }}>
@@ -908,7 +1103,7 @@ export default function PhotographerEventGallery() {
                                   )}
                                 </View>
                               </View>
-                              
+
                               {!isUploading && (
                                 <TouchableOpacity onPress={() => setSelectedUploadAssets(prev => prev.filter((_, i) => i !== index))}>
                                   <X color="#4B5563" size={16} strokeWidth={1.5} />
@@ -1010,9 +1205,14 @@ const styles = StyleSheet.create({
 
   content: { flex: 1, backgroundColor: '#fff', minHeight: Dimensions.get('window').height },
 
-  floatingHeader: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', paddingBottom: 15, zIndex: 100, borderBottomWidth: 1, borderBottomColor: '#E5E5EA' },
-  floatingBackBtn: { paddingHorizontal: 15 },
-  floatingTitle: { fontSize: 18, fontWeight: 'bold', color: '#111' },
+  floatingHeader: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: 'rgba(255,255,255,0.95)', zIndex: 100, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.05)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 3 },
+  floatingHeaderContent: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 15, paddingBottom: 15, minHeight: 60 },
+  headerLeft: { zIndex: 10 },
+  headerCenter: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 15, alignItems: 'center', justifyContent: 'center', zIndex: 1 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 12, zIndex: 10 },
+  headerIconBg: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' },
+  floatingBackBtn: {},
+  floatingTitle: { fontSize: 18, fontWeight: 'bold', color: '#111', textAlign: 'center' },
   emptyState: { alignItems: 'center', paddingTop: 60, paddingBottom: 40, paddingHorizontal: 20 },
   emptyIcon: { width: 80, height: 80, opacity: 0.3, marginBottom: 20 },
   emptyTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', marginBottom: 8 },
@@ -1024,7 +1224,7 @@ const styles = StyleSheet.create({
   participantRole: { fontSize: 13, color: '#666', marginTop: 2 },
   participantBtn: { backgroundColor: '#FFF5F0', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 20 },
   participantBtnText: { color: '#FF6B00', fontWeight: 'bold', fontSize: 12 },
-  videoPlayOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center' },
+  videoPlayOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', alignItems: 'center', justifyContent: 'center', zIndex: 10 },
 
   photoActionsRow: { position: 'absolute', top: 6, left: 6, flexDirection: 'row', zIndex: 10 },
   photoActionMicroBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', marginLeft: 4 },

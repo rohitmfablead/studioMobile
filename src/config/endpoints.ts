@@ -19,6 +19,7 @@ export const API_ENDPOINTS = {
     JOIN: 'groups/join',
     DETAILS: (id: string | number) => `groups/${id}`,
     PHOTOS: (id: string | number) => `groups/${id}/photos`,
+    VIDEOS: (id: string | number) => `groups/${id}/videos`,
     UPLOAD_PHOTOS: (id: string | number) => `groups/${id}/photos/upload`,
     PARTICIPANTS: (id: string | number) => `groups/${id}/participants`,
     PARTICIPANTS_MATCHED: (id: string | number) => `groups/${id}/participants-matched-photos`,
@@ -33,9 +34,11 @@ export const API_ENDPOINTS = {
   },
   USERS: {
     PROFILE: (id: string | number) => `users/${id}/profile`,
+    UPDATE_AVATAR: 'users/avatar',
   },
   PHOTO_ACTIONS: {
     LIKE: (id: string | number) => `photos/${id}/like`,
+    FAVORITE: (id: string | number) => `photos/${id}/favorite`,
     DOWNLOAD: (id: string | number) => `photos/${id}/download?no_watermark=1`,
   },
   PHOTOS: 'photos',

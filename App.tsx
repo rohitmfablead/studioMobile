@@ -3,6 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { Provider } from 'react-redux';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import Toast from 'react-native-toast-message';
+import * as Linking from 'expo-linking';
 
 import { store } from './src/store';
 import { useAppDispatch } from './src/store/hooks';
@@ -11,8 +13,7 @@ import { getItemAsync } from './src/utils/storage';
 import { navigationRef } from './src/utils/routerShim';
 
 import AuthNavigator from './src/navigation/AuthNavigator';
-import PhotographerNavigator from './src/navigation/PhotographerNavigator';
-import ParticipantNavigator from './src/navigation/ParticipantNavigator';
+import MainNavigator from './src/navigation/MainNavigator';
 import { useSelector } from 'react-redux';
 
 SplashScreen.preventAutoHideAsync();
@@ -50,16 +51,46 @@ function RootNavigator() {
   if (!isReady) return null;
 
   if (!user) return <AuthNavigator />;
-  if (user.role === 'photographer') return <PhotographerNavigator />;
-  return <ParticipantNavigator />;
+  return <MainNavigator />;
 }
+
+const prefix = Linking.createURL('/');
+
+const linking = {
+  prefixes: [
+    prefix,
+    'photosharemobile://',
+    'https://fablead-studio.com',
+    'http://fablead-studio.com',
+  ],
+  config: {
+    screens: {
+      MainTabs: {
+        screens: {
+          Dashboard: 'dashboard',
+          Profile: 'profile',
+        }
+      },
+      'join-event': 'join/:id',
+      EventDetails: 'event/:id',
+      Analytics: 'analytics',
+      Help: 'help',
+      Tutorials: 'tutorials',
+      Privacy: 'privacy',
+      Plans: 'plans',
+      Storage: 'storage',
+    }
+  }
+};
+
 
 export default function App() {
   return (
     <Provider store={store}>
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer ref={navigationRef} linking={linking}>
         <StatusBar style="auto" />
         <RootNavigator />
+        <Toast />
       </NavigationContainer>
     </Provider>
   );

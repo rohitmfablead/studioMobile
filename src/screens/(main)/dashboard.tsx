@@ -8,6 +8,9 @@ import { router } from '../../utils/routerShim';
 
 export default function PhotographerDashboard() {
   const userId = useSelector((state: any) => state.app.user?.id);
+  const userRole = useSelector((state: any) => state.app.user?.role);
+  const isPhotographer = userRole === 'photographer';
+  
   const { data: userProfileData, refetch: refetchProfile } = useGetUserProfileQuery(userId as string, { skip: !userId });
   const user = userProfileData?.user;
 
@@ -116,7 +119,6 @@ export default function PhotographerDashboard() {
                 </View>
                 <Text style={styles.actionText}>New Group</Text>
               </TouchableOpacity>
-
               <View style={styles.verticalDivider} />
 
               <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/join-event')}>
@@ -126,14 +128,17 @@ export default function PhotographerDashboard() {
                 <Text style={styles.actionText}>Join Group</Text>
               </TouchableOpacity>
 
-              <View style={styles.verticalDivider} />
-
-              <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/storage')}>
-                <View style={[styles.iconBox, { backgroundColor: '#F5F3FF' }]}>
-                  <ImageIcon color="#8B5CF6" size={24} />
-                </View>
-                <Text style={styles.actionText}>Storage</Text>
-              </TouchableOpacity>
+              {isPhotographer && (
+                <>
+                  <View style={styles.verticalDivider} />
+                  <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/storage')}>
+                    <View style={[styles.iconBox, { backgroundColor: '#F5F3FF' }]}>
+                      <ImageIcon color="#8B5CF6" size={24} />
+                    </View>
+                    <Text style={styles.actionText}>Storage</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </View>
         </ImageBackground>
@@ -156,7 +161,7 @@ export default function PhotographerDashboard() {
                 <ImageIcon color="#FF6B00" size={32} />
               </View>
               <Text style={styles.emptyStateTitle}>No Events Yet</Text>
-              <Text style={styles.emptyStateDesc}>You haven't created any events. Tap "New Group" to get started and share memories.</Text>
+              <Text style={styles.emptyStateDesc}>You haven't joined or created any events yet. Create or join a group to get started.</Text>
               <TouchableOpacity style={styles.emptyStateBtn} onPress={() => router.push('/create-event')}>
                 <Plus color="#fff" size={20} />
                 <Text style={styles.emptyStateBtnText}>Create Group</Text>
@@ -167,7 +172,7 @@ export default function PhotographerDashboard() {
               <TouchableOpacity
                 key={item.id}
                 style={styles.eventCard}
-                onPress={() => router.push(`/(photographer)/event/${item.id}`)}
+                onPress={() => router.push(`/(main)/event/${item.id}`)}
               >
                 {/* Top Image Section */}
                 <View style={styles.cardImageContainer}>

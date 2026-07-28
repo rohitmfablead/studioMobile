@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from '../../utils/routerShim';
 import { ChevronLeft, Check, Camera, Image as ImageIcon } from 'lucide-react-native';
 import { useGetBusinessSettingsQuery, useUpdateBusinessSettingsMutation } from '../../store/apiSlice';
-import { Alert } from 'react-native';
+import { toast } from '../../utils/toast';
 import { useState, useEffect } from 'react';
 
 export default function FlipbookScreen() {
@@ -42,19 +42,17 @@ export default function FlipbookScreen() {
         if (Platform.OS === 'web' && localFile.file) {
           formData.append('flipbook_logo', localFile.file);
         } else {
-          formData.append('flipbook_logo', {
-            uri: localFile.uri,
-            name: localFile.fileName || 'flipbook_logo.png',
-            type: localFile.mimeType || 'image/png'
-          } as any);
+          const response = await fetch(localFile.uri);
+          const blob = await response.blob();
+          formData.append('flipbook_logo', blob as any, localFile.fileName || 'flipbook_logo.png');
         }
       }
 
       await updateBusinessSettings(formData).unwrap();
-      Alert.alert('Success', 'Business settings updated successfully!');
+      toast.success('Saved!', 'Business settings updated successfully.');
     } catch (err) {
       console.error(err);
-      Alert.alert('Error', 'Failed to update settings.');
+      toast.error('Error', 'Failed to update settings.');
     }
   };
 

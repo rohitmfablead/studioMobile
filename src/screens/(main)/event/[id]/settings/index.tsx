@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from '../../../../../utils/routerShim';
 import { ChevronLeft, ChevronRight, Settings as SettingsIcon, User, Lock, Folder, Download, BookOpen, Star, LogOut, Trash2 } from 'lucide-react-native';
 import { useSelector } from 'react-redux';
-import { useGetGroupDetailsQuery, useDeleteGroupMutation } from '../../../../../store/apiSlice';
+import { useDeleteGroupMutation, useGetGroupDetailsQuery } from '../../../../../store/apiSlice';
 import { Platform, Alert, ActivityIndicator } from 'react-native';
 
 export default function SettingsScreen() {
@@ -14,13 +14,25 @@ export default function SettingsScreen() {
   const { data: detailsData } = useGetGroupDetailsQuery(id as string);
   const isOwner = detailsData?.group?.owner?.id == userId || (detailsData?.group as any)?.user_id == userId;
 
+  const MENU_ITEMS = [
+    { icon: <SettingsIcon color="#666" size={22} />, label: 'General Settings', type: 'nav', onPress: () => router.push(`/(main)/event/${id}/settings/general`) },
+    { icon: <User color="#666" size={22} />, label: 'Participants', type: 'nav', onPress: () => router.push(`/(main)/event/${id}/settings/participants`) },
+    { icon: <Lock color="#666" size={22} />, label: 'Privacy Settings', type: 'nav', onPress: () => router.push(`/(main)/event/${id}/settings/privacy`) },
+    { icon: <Folder color="#666" size={22} />, label: 'Folders', type: 'nav', onPress: () => router.push(`/(main)/event/${id}/settings/folders`) },
+    { icon: <Download color="#666" size={22} />, label: 'View & Download', type: 'nav', onPress: () => router.push(`/(main)/event/${id}/settings/view-download`) },
+    { icon: <Download color="#666" size={22} />, label: 'Download History', type: 'nav', onPress: () => router.push(`/(main)/event/${id}/settings/download-history`) },
+    { icon: <BookOpen color="#666" size={22} />, label: 'Digital Flipbook', type: 'nav', onPress: () => router.push(`/(main)/event/${id}/settings/flipbook`) },
+    { icon: <Star color="#666" size={22} />, label: 'Branding & Sponsors', type: 'nav', onPress: () => router.push(`/(main)/event/${id}/settings/branding`) },
+    { icon: <Star color="#666" size={22} />, label: 'Client Favorite', type: 'nav', onPress: () => router.push(`/(main)/event/${id}/settings/favorite`) },
+  ];
+
   const [deleteGroup, { isLoading: isDeleting }] = useDeleteGroupMutation();
 
   const executeDelete = async () => {
     try {
       const res = await deleteGroup(id as string).unwrap();
       if (res.success) {
-        router.replace('/(participant)/home');
+        router.replace('/(main)/dashboard');
       }
     } catch (e) {
       console.error(e);
@@ -40,18 +52,6 @@ export default function SettingsScreen() {
       ]);
     }
   };
-
-  const MENU_ITEMS = [
-    { icon: <SettingsIcon color="#666" size={22} />, label: 'General Settings', type: 'nav', onPress: () => router.push(`/(participant)/event/${id}/settings/general`) },
-    { icon: <User color="#666" size={22} />, label: 'Participants', type: 'nav', onPress: () => router.push(`/(participant)/event/${id}/settings/participants`) },
-    { icon: <Lock color="#666" size={22} />, label: 'Privacy Settings', type: 'nav', onPress: () => router.push(`/(participant)/event/${id}/settings/privacy`) },
-    { icon: <Folder color="#666" size={22} />, label: 'Folders', type: 'nav', onPress: () => router.push(`/(participant)/event/${id}/settings/folders`) },
-    { icon: <Download color="#666" size={22} />, label: 'View & Download', type: 'nav', onPress: () => router.push(`/(participant)/event/${id}/settings/view-download`) },
-    { icon: <Download color="#666" size={22} />, label: 'Download History', type: 'nav', onPress: () => router.push(`/(participant)/event/${id}/settings/download-history`) },
-    { icon: <BookOpen color="#666" size={22} />, label: 'Digital Flipbook', type: 'nav', onPress: () => router.push(`/(participant)/event/${id}/settings/flipbook`) },
-    { icon: <Star color="#666" size={22} />, label: 'Branding & Sponsors', type: 'nav', onPress: () => router.push(`/(participant)/event/${id}/settings/branding`) },
-    { icon: <Star color="#666" size={22} />, label: 'Client Favorite', type: 'nav', onPress: () => router.push(`/(participant)/event/${id}/settings/favorite`) },
-  ];
 
   return (
     <View style={styles.container}>

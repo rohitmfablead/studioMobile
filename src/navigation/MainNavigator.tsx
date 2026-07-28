@@ -1,56 +1,58 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { LayoutDashboard, Calendar, Settings as SettingsIcon, User } from 'lucide-react-native';
+import { LayoutDashboard, Calendar, Settings as SettingsIcon, User, Image as ImageIcon } from 'lucide-react-native';
 
-import Dashboard from '../screens/(photographer)/dashboard';
-import Events from '../screens/(photographer)/events';
-import Settings from '../screens/(photographer)/settings';
-import Profile from '../screens/(photographer)/profile';
+import Dashboard from '../screens/(main)/dashboard';
+import MyPhotos from '../screens/(main)/my-photos';
+import Settings from '../screens/(main)/settings';
+import Profile from '../screens/(main)/profile';
 
-import BusinessProfile from '../screens/(photographer)/business-profile';
-import Team from '../screens/(photographer)/team';
-import Billing from '../screens/(photographer)/billing';
-import BusinessBranding from '../screens/(photographer)/business-branding';
-import PortfolioSettings from '../screens/(photographer)/portfolio-settings';
-import Flipbook from '../screens/(photographer)/flipbook';
-import Watermark from '../screens/(photographer)/watermark';
-import Plans from '../screens/(photographer)/plans';
-import AddFeatures from '../screens/(photographer)/add-features';
-import Storage from '../screens/(photographer)/storage';
-import Analytics from '../screens/(photographer)/analytics';
+import BusinessProfile from '../screens/(main)/business-profile';
+import Team from '../screens/(main)/team';
+import Billing from '../screens/(main)/billing';
+import BusinessBranding from '../screens/(main)/business-branding';
+import PortfolioSettings from '../screens/(main)/portfolio-settings';
+import Flipbook from '../screens/(main)/flipbook';
+import Watermark from '../screens/(main)/watermark';
+import Plans from '../screens/(main)/plans';
+import AddFeatures from '../screens/(main)/add-features';
+import Storage from '../screens/(main)/storage';
+import Analytics from '../screens/(main)/analytics';
+import Help from '../screens/(main)/help';
+import Tutorials from '../screens/(main)/tutorials';
+import Privacy from '../screens/(main)/privacy';
 import CreateEvent from '../screens/create-event';
 import JoinEvent from '../screens/join-event';
+import EventDetails from '../screens/(main)/event/[id]';
 
-import EventDetails from '../screens/(photographer)/event/[id]';
+import EventSettings from '../screens/(main)/event/[id]/settings/index';
+import EventSettingsGeneral from '../screens/(main)/event/[id]/settings/general';
+import EventSettingsParticipants from '../screens/(main)/event/[id]/settings/participants';
+import EventSettingsPrivacy from '../screens/(main)/event/[id]/settings/privacy';
+import EventSettingsBranding from '../screens/(main)/event/[id]/settings/branding';
+import EventSettingsViewDownload from '../screens/(main)/event/[id]/settings/view-download';
+import EventSettingsFavorite from '../screens/(main)/event/[id]/settings/favorite';
+import EventSettingsFolders from '../screens/(main)/event/[id]/settings/folders';
+import EventSettingsFlipbook from '../screens/(main)/event/[id]/settings/flipbook';
+import EventSettingsDownloadHistory from '../screens/(main)/event/[id]/settings/download-history';
 
-import EventSettings from '../screens/(photographer)/event/[id]/settings/index';
-import EventSettingsGeneral from '../screens/(photographer)/event/[id]/settings/general';
-import EventSettingsParticipants from '../screens/(photographer)/event/[id]/settings/participants';
-import EventSettingsPrivacy from '../screens/(photographer)/event/[id]/settings/privacy';
-import EventSettingsBranding from '../screens/(photographer)/event/[id]/settings/branding';
-import EventSettingsViewDownload from '../screens/(photographer)/event/[id]/settings/view-download';
-import EventSettingsFavorite from '../screens/(photographer)/event/[id]/settings/favorite';
-import EventSettingsFolders from '../screens/(photographer)/event/[id]/settings/folders';
-import EventSettingsFlipbook from '../screens/(photographer)/event/[id]/settings/flipbook';
-import EventSettingsDownloadHistory from '../screens/(photographer)/event/[id]/settings/download-history';
-
-import EventChatList from '../screens/(photographer)/event/[id]/chat/index';
-import EventChat from '../screens/(photographer)/event/[id]/chat/[userId]';
+import EventChatList from '../screens/(main)/event/[id]/chat/index';
+import EventChat from '../screens/(main)/event/[id]/chat/[userId]';
 
 import { CustomTabBar } from '../components/navigation/CustomTabBar';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-function PhotographerTabs() {
+function MainTabs() {
   return (
     <Tab.Navigator
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{ headerShown: false, tabBarActiveTintColor: '#FF9500' }}
     >
       <Tab.Screen name="Dashboard" component={Dashboard} options={{ title: 'Dashboard', tabBarIcon: ({ color }) => <LayoutDashboard color={color} size={24} /> }} />
-      <Tab.Screen name="Events" component={Events} options={{ title: 'Event', tabBarIcon: ({ color }) => <Calendar color={color} size={24} /> }} />
+      <Tab.Screen name="MyPhotos" component={MyPhotos} options={{ title: 'My Photo', tabBarIcon: ({ color }) => <ImageIcon color={color} size={24} /> }} />
       <Tab.Screen name="Settings" component={Settings} options={{ title: 'Settings', tabBarIcon: ({ color }) => <SettingsIcon color={color} size={24} /> }} />
       <Tab.Screen name="Profile" component={Profile} options={{ title: 'Profile', tabBarIcon: ({ color }) => <User color={color} size={24} /> }} />
       <Tab.Screen name="EventDetails" component={EventDetails} options={{ tabBarButton: () => null }} />
@@ -58,10 +60,10 @@ function PhotographerTabs() {
   );
 }
 
-export default function PhotographerNavigator() {
+export default function MainNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="PhotographerTabs" component={PhotographerTabs} />
+      <Stack.Screen name="MainTabs" component={MainTabs} />
       
       {/* Modals & Hidden Routes */}
       <Stack.Screen name="BusinessProfile" component={BusinessProfile} />
@@ -75,6 +77,9 @@ export default function PhotographerNavigator() {
       <Stack.Screen name="AddFeatures" component={AddFeatures} />
       <Stack.Screen name="Storage" component={Storage} />
       <Stack.Screen name="Analytics" component={Analytics} />
+      <Stack.Screen name="Help" component={Help} />
+      <Stack.Screen name="Tutorials" component={Tutorials} />
+      <Stack.Screen name="Privacy" component={Privacy} />
       <Stack.Screen name="create-event" component={CreateEvent} />
       <Stack.Screen name="join-event" component={JoinEvent} />
       
