@@ -22,7 +22,14 @@ export default function PhotographerEventGallery() {
   const isLoadingParticipants = false;
 
   const { id } = useLocalSearchParams();
-  const [detailsData, set_detailsData] = useState<any>({});
+  const [detailsData, set_detailsData] = useState<any>({
+    group: {
+      id: '1',
+      name: 'Sample Wedding Event',
+      cover_image: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80',
+      owner: { id: 1, name: 'Admin' }
+    }
+  });
   const group = detailsData?.group;
   const userId = useSelector((state: any) => state.app.user?.id);
   const isOwner = group?.owner?.id == userId || (group as any)?.user_id == userId;
@@ -31,8 +38,28 @@ export default function PhotographerEventGallery() {
   const [renderLimit, setRenderLimit] = useState(18);
   const isFetchingRef = useRef(false);
 
-  const [photosData, set_photosData] = useState<any>({});
-  const [videosData, set_videosData] = useState<any>({});
+  const dummyPhotos = Array.from({ length: 20 }).map((_, i) => ({
+    id: i + 1,
+    url: `https://picsum.photos/400/400?random=${i}`,
+    thumbnail: `https://picsum.photos/200/200?random=${i}`,
+    is_liked: i % 3 === 0
+  }));
+
+  const [photosData, set_photosData] = useState<any>({
+    data: { photos: dummyPhotos }
+  });
+  
+  const dummyVideos = [
+    {
+      id: 1,
+      thumbnail: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80',
+      url: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+    }
+  ];
+
+  const [videosData, set_videosData] = useState<any>({
+    data: { videos: dummyVideos }
+  });
 
   const PHOTOS = photosData?.data?.photos || [];
   const VIDEOS = videosData?.data?.videos || [];

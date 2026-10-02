@@ -6,7 +6,13 @@ import { useEffect, useState } from 'react';
 export default function MyPhotosScreen() {
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
 
-  const [groupsData, set_groupsData] = useState<any>({});
+  const [groupsData, set_groupsData] = useState<any>({
+    groups: [
+      { id: 1, name: 'Wedding Ceremony' },
+      { id: 2, name: 'Reception Party' },
+      { id: 3, name: 'Pre-Wedding Shoot' }
+    ]
+  });
   const groups = groupsData?.groups || [];
 
   // Automatically select the first group if none is selected
@@ -17,7 +23,14 @@ export default function MyPhotosScreen() {
   }, [groups, selectedGroupId]);
 
   const matchMyPhotos = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
-  const matchData: any = null;
+  
+  const dummyPhotos = Array.from({ length: 10 }).map((_, i) => ({
+    id: i + 1,
+    url: `https://picsum.photos/400/400?random=${i + 100}`,
+    thumbnail: `https://picsum.photos/200/200?random=${i + 100}`
+  }));
+
+  const matchData: any = { photos: dummyPhotos };
   const isLoadingGroups = false;
   const isLoadingPhotos = false;
   const refetchGroups = () => {};
