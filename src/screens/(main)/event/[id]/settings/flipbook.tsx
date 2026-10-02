@@ -43,15 +43,15 @@ export default function FlipbookSettings() {
         
         <View style={[styles.switchCard, { marginTop: 10 }]}>
           <View style={styles.switchLeft}>
-            <View style={[styles.iconBox, { backgroundColor: '#FFF0E5' }]}>
-              <BookOpen color="#FF6B00" size={16} />
+            <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}>
+              <BookOpen color="#2563EB" size={16} />
             </View>
             <View style={styles.switchTextContainer}>
               <Text style={styles.switchTitle}>Enable Digital Flipbook</Text>
               <Text style={styles.switchSub}>Create an interactive flipbook from your photos</Text>
             </View>
           </View>
-          <Switch value={enableFlipbook} onValueChange={setEnableFlipbook} trackColor={{ false: '#E5E5EA', true: '#FF6B00' }} />
+          <Switch value={enableFlipbook} onValueChange={setEnableFlipbook} trackColor={{ false: '#E5E5EA', true: '#2563EB' }} />
         </View>
 
         {enableFlipbook && (
@@ -69,7 +69,7 @@ export default function FlipbookSettings() {
                   <Text style={styles.gridTitle}>Auto Play</Text>
                   <Text style={styles.gridSub}>Automatically flip through pages</Text>
                 </View>
-                <Switch value={autoPlay} onValueChange={setAutoPlay} trackColor={{ false: '#E5E5EA', true: '#FF6B00' }} />
+                <Switch value={autoPlay} onValueChange={setAutoPlay} trackColor={{ false: '#E5E5EA', true: '#2563EB' }} />
               </View>
 
               <View style={styles.gridCard}>
@@ -80,7 +80,7 @@ export default function FlipbookSettings() {
                   <Text style={styles.gridTitle}>Show Page Numbers</Text>
                   <Text style={styles.gridSub}>Display page numbers at the bottom</Text>
                 </View>
-                <Switch value={showPageNumbers} onValueChange={setShowPageNumbers} trackColor={{ false: '#E5E5EA', true: '#FF6B00' }} />
+                <Switch value={showPageNumbers} onValueChange={setShowPageNumbers} trackColor={{ false: '#E5E5EA', true: '#2563EB' }} />
               </View>
 
               <View style={styles.gridCard}>
@@ -98,8 +98,8 @@ export default function FlipbookSettings() {
               </View>
 
               <View style={styles.gridCard}>
-                <View style={[styles.iconBoxSmall, { backgroundColor: '#FFF7ED' }]}>
-                  <Music color="#F97316" size={14} />
+                <View style={[styles.iconBoxSmall, { backgroundColor: '#EFF6FF' }]}>
+                  <Music color="#2563EB" size={14} />
                 </View>
                 <View style={styles.gridTextContainer}>
                   <Text style={styles.gridTitle}>Background Music</Text>
@@ -118,8 +118,8 @@ export default function FlipbookSettings() {
             
             <TouchableOpacity style={styles.pickerBox}>
                <View style={styles.pickerLeft}>
-                  <View style={[styles.iconBoxSmall, { backgroundColor: '#FFF0E5' }]}>
-                    <ImageIcon color="#FF6B00" size={14} />
+                  <View style={[styles.iconBoxSmall, { backgroundColor: '#EFF6FF' }]}>
+                    <ImageIcon color="#2563EB" size={14} />
                   </View>
                   <View>
                     <Text style={styles.gridTitle}>Select from Gallery</Text>
@@ -144,8 +144,8 @@ export default function FlipbookSettings() {
             </View>
             
             <View style={styles.bannerInfo}>
-              <View style={[styles.iconBoxSmall, { backgroundColor: '#FFF9F2', marginRight: 10 }]}>
-                 <BookOpen color="#D97706" size={14} />
+              <View style={[styles.iconBoxSmall, { backgroundColor: '#EFF6FF', marginRight: 10 }]}>
+                 <BookOpen color="#1D4ED8" size={14} />
               </View>
               <View style={{flex: 1}}>
                  <Text style={[styles.gridTitle, {color: '#92400E'}]}>Custom Flipbook</Text>
@@ -167,9 +167,9 @@ const styles = StyleSheet.create({
   headerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', paddingHorizontal: 15, paddingTop: 15, justifyContent: 'space-between' },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   backBtn: { padding: 4, flexDirection: 'row', alignItems: 'center' },
-  demoBtn: { backgroundColor: '#FFF0E5', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  demoBtn: { backgroundColor: '#EFF6FF', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
   demoBtnText: { fontSize: 12, fontWeight: '600', color: '#111', marginLeft: 6 },
-  saveBtn: { backgroundColor: '#FF6B00', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, justifyContent: 'center' },
+  saveBtn: { backgroundColor: '#2563EB', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, justifyContent: 'center' },
   saveBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
   headerContent: { paddingBottom: 20 },
   headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#fff' },

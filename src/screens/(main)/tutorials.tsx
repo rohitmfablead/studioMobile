@@ -41,7 +41,7 @@ export default function TutorialsScreen() {
                 <Image source={{ uri: video.image }} style={styles.thumbnail} />
                 <View style={styles.overlay} />
                 <View style={styles.playBtnContainer}>
-                  <PlayCircle color="#F97316" size={48} fill="#FFFFFF" />
+                  <PlayCircle color="#2563EB" size={48} fill="#FFFFFF" />
                 </View>
                 <View style={styles.timeBadge}>
                   <Clock color="#FFFFFF" size={12} />

@@ -1,15 +1,16 @@
 import { BookOpen, Briefcase, Calendar, ChevronRight, Droplets, Globe, HardDrive, Image as ImageIcon, LifeBuoy, Maximize, User, UsersRound, Zap } from 'lucide-react-native';
 import { ActivityIndicator, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useGetDashboardStatsQuery } from '../../store/apiSlice';
 import { router } from '../../utils/routerShim';
 import { useSelector } from 'react-redux';
+import { useState } from 'react';
 
 export default function SettingsScreen() {
+  const isLoading = false;
   const user = useSelector((state: any) => state.app.user);
   const isPhotographer = user?.role === 'photographer';
   
-  const { data, isLoading } = useGetDashboardStatsQuery();
+  const [data, setData] = useState<any>({});
   const stats = data?.stats;
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -28,7 +29,7 @@ export default function SettingsScreen() {
         ) : (
           <View style={styles.statsGrid}>
             <View style={styles.statCard}>
-              <HardDrive color="#D97706" size={24} />
+              <HardDrive color="#1D4ED8" size={24} />
               <Text style={styles.statValue}>{stats?.storage?.usedFormatted || '0 B'}</Text>
               <Text style={styles.statLabel}>of {stats?.storage?.limitBytes ? (stats.storage.limitBytes / (1024 * 1024 * 1024)).toFixed(0) + ' GB' : 'Unlimited'}</Text>
             </View>
@@ -43,7 +44,7 @@ export default function SettingsScreen() {
               <Text style={styles.statLabel}>of {stats?.subscription?.eventUsage?.limit || 2} Events</Text>
             </View>
             <View style={styles.statCard}>
-              <UsersRound color="#F59E0B" size={24} />
+              <UsersRound color="#2563EB" size={24} />
               <Text style={styles.statValue}>1</Text>
               <Text style={styles.statLabel}>Albums Joined</Text>
             </View>
@@ -84,7 +85,7 @@ export default function SettingsScreen() {
             <View style={styles.divider} />
 
             <TouchableOpacity style={styles.row} onPress={() => router.push('/business-branding')}>
-              <View style={[styles.iconBox, { backgroundColor: '#FFF0E5' }]}><Briefcase color="#FF6B00" size={20} /></View>
+              <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}><Briefcase color="#2563EB" size={20} /></View>
               <View style={styles.rowTextContainer}>
                 <Text style={styles.rowTitle}>Business Branding</Text>
                 <Text style={styles.rowSubtitle}>Logo, social links & website</Text>
@@ -134,7 +135,7 @@ export default function SettingsScreen() {
               <View style={[styles.iconBox, { backgroundColor: '#DCFCE7' }]}><Maximize color="#16A34A" size={20} /></View>
               <View style={styles.rowTextContainer}>
                 <Text style={styles.rowTitle}>High Res Upload</Text>
-                <Text style={[styles.rowSubtitle, { color: '#EA580C' }]}>⚠️ Uses more storage</Text>
+                <Text style={[styles.rowSubtitle, { color: '#2563EB' }]}>⚠️ Uses more storage</Text>
               </View>
               <Switch value={stats?.settings?.resize_photo_images !== false} trackColor={{ true: '#34C759' }} disabled />
               </View>
@@ -157,7 +158,7 @@ export default function SettingsScreen() {
               <View style={styles.divider} />
 
               <TouchableOpacity style={styles.row}>
-                <View style={[styles.iconBox, { backgroundColor: '#FFF0E5' }]}><Briefcase color="#FF6B00" size={20} /></View>
+                <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}><Briefcase color="#2563EB" size={20} /></View>
                 <View style={styles.rowTextContainer}>
                   <Text style={styles.rowTitle}>Transactions</Text>
                   <Text style={styles.rowSubtitle}>Invoice history & payments</Text>

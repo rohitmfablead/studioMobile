@@ -25,7 +25,7 @@ export default function BillingScreen() {
           <View style={styles.planGlow} />
           <View style={styles.planHeader}>
             <View style={styles.planBadge}>
-              <Zap color="#F59E0B" size={12} />
+              <Zap color="#2563EB" size={12} />
               <Text style={styles.planBadgeText}>PRO PLAN</Text>
             </View>
             <Text style={styles.planStatus}>Active</Text>
@@ -94,11 +94,11 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 20, paddingBottom: 40 },
   
   planWidget: { backgroundColor: '#18181B', borderRadius: 24, padding: 25, position: 'relative', overflow: 'hidden', borderWidth: 1, borderColor: '#27272A', marginBottom: 35 },
-  planGlow: { position: 'absolute', top: -100, right: -50, width: 250, height: 250, backgroundColor: '#F59E0B', opacity: 0.1, borderRadius: 125, blurRadius: 50 },
+  planGlow: { position: 'absolute', top: -100, right: -50, width: 250, height: 250, backgroundColor: '#2563EB', opacity: 0.1, borderRadius: 125, blurRadius: 50 },
   
   planHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   planBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.15)', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8 },
-  planBadgeText: { color: '#F59E0B', fontSize: 10, fontWeight: '800', letterSpacing: 1, marginLeft: 4 },
+  planBadgeText: { color: '#2563EB', fontSize: 10, fontWeight: '800', letterSpacing: 1, marginLeft: 4 },
   planStatus: { color: '#10B981', fontSize: 12, fontWeight: '700' },
   
   planTitle: { fontSize: 14, color: '#A1A1AA', marginBottom: 4 },
@@ -107,10 +107,10 @@ const styles = StyleSheet.create({
   planPeriod: { fontSize: 14, color: '#71717A', marginBottom: 6, marginLeft: 4 },
   
   progressBar: { height: 6, backgroundColor: '#27272A', borderRadius: 3, overflow: 'hidden', marginBottom: 10 },
-  progressFill: { height: '100%', backgroundColor: '#F59E0B', borderRadius: 3 },
+  progressFill: { height: '100%', backgroundColor: '#2563EB', borderRadius: 3 },
   progressText: { fontSize: 12, color: '#71717A', marginBottom: 25 },
   
-  upgradeBtn: { backgroundColor: '#F59E0B', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+  upgradeBtn: { backgroundColor: '#2563EB', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   upgradeBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
   
   sectionHeading: { fontSize: 11, fontWeight: '800', color: '#52525B', letterSpacing: 1.5, marginBottom: 15, marginLeft: 5 },

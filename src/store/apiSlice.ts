@@ -46,6 +46,17 @@ export interface CheckPasswordResponse {
   is_password_exists: boolean;
 }
 
+export interface SetPasswordRequest {
+  user_id: string;
+  password: string;
+  password_confirmation: string;
+}
+
+export interface SetPasswordResponse {
+  success: boolean;
+  message: string;
+}
+
 export interface UserDetailsRequest {
   user_id: number | string;
 }
@@ -556,80 +567,198 @@ export const appApi = createApi({
       enable_watermark?: string; 
       no_watermark?: string; 
       is_platform?: string; 
-      onProgress?: (progress: number) => void;
+      onProgress?: (progress: number, current?: number, total?: number, fileProgresses?: { [key: number]: number }) => void;
+      onItemSuccess?: () => void;
     }>({
-      queryFn: async ({ id, assets, enable_watermark, no_watermark, is_platform, onProgress }, api) => {
+      queryFn: async ({ id, assets, enable_watermark, no_watermark, is_platform, onProgress, onItemSuccess }, api) => {
         try {
           const state = api.getState() as any;
           const token = state.app.token;
           const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'https://fablead-studio.com/services/api/';
           
           const { Platform } = require('react-native');
-          const formData = new FormData();
+          const FileSystem = require('expo-file-system/legacy');
+          let Notifications: any = null;
+          try {
+            const Constants = require('expo-constants').default || require('expo-constants');
+            if (Constants.appOwnership !== 'expo') {
+              Notifications = require('expo-notifications');
+              if (Notifications && Notifications.setNotificationHandler) {
+                Notifications.setNotificationHandler({
+                  handleNotification: async () => ({
+                    shouldShowAlert: true,
+                    shouldPlaySound: false,
+                    shouldSetBadge: false,
+                  }),
+                });
+              }
+            }
+          } catch (e) {
+            console.warn('Expo Notifications not available in this environment');
+          }
           
-          for (let i = 0; i < assets.length; i++) {
-            const asset = assets[i];
-            const fileName = asset.fileName || `photo_${i}.jpg`;
+          let totalUploaded = 0;
+          const totalAssets = assets.length;
+          
+          let notificationId: string | null = null;
+          if (Platform.OS !== 'web' && Notifications) {
+            try {
+              notificationId = await Notifications.scheduleNotificationAsync({
+                content: {
+                  title: 'Uploading Photos',
+                  body: `Uploading 0 of ${totalAssets}...`,
+                  autoDismiss: false,
+                  sticky: true,
+                },
+                trigger: null,
+              });
+            } catch (e) {
+              console.warn('Failed to schedule notification', e);
+            }
+          }
+
+          let lastError = null;
+          let results = [];
+          let fileProgresses: { [key: number]: number } = {};
+
+          let currentIndex = 0;
+          const CONCURRENCY = 10;
+
+          const uploadNext = async (): Promise<void> => {
+            if (currentIndex >= assets.length) return;
+            const actualIndex = currentIndex++;
+            const asset = assets[actualIndex];
+            const fileName = asset.fileName || `photo_${actualIndex}.jpg`;
             const mimeType = asset.mimeType || 'image/jpeg';
             
             if (Platform.OS === 'web') {
-              // On web, fetch the blob from the URI to append a true File object
+              // Web fallback uses standard XHR
+              const formData = new FormData();
               const res = await fetch(asset.uri);
               const blob = await res.blob();
               const file = new File([blob], fileName, { type: mimeType });
               formData.append('photos[]', file);
               formData.append('files[]', file);
+              if (enable_watermark !== undefined) formData.append('enable_watermark', String(enable_watermark));
+              if (no_watermark !== undefined) formData.append('no_watermark', String(no_watermark));
+              if (is_platform !== undefined) formData.append('is_platform', String(is_platform));
+
+              try {
+                const result = await new Promise((resolve, reject) => {
+                  const xhr = new XMLHttpRequest();
+                  xhr.open('POST', `${baseUrl}groups/${id}/photos/upload`);
+                  if (token) xhr.setRequestHeader('authorization', `Bearer ${token}`);
+                  
+                  xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable) {
+                      fileProgresses[actualIndex] = Math.round((event.loaded / event.total) * 100);
+                      if (onProgress) onProgress(Math.round((totalUploaded / totalAssets) * 100), totalUploaded, totalAssets, fileProgresses);
+                    }
+                  };
+
+                  xhr.onload = () => resolve(xhr.status >= 200 && xhr.status < 300 ? { data: JSON.parse(xhr.responseText) } : { error: xhr.responseText });
+                  xhr.onerror = () => reject(new Error('Network request failed'));
+                  xhr.send(formData as any);
+                });
+                results.push(result);
+                
+                fileProgresses[actualIndex] = 100;
+                totalUploaded++;
+                if (onItemSuccess) onItemSuccess();
+                if (onProgress) onProgress(Math.round((totalUploaded / totalAssets) * 100), totalUploaded, totalAssets, fileProgresses);
+              } catch (e) {
+                lastError = e;
+              }
             } else {
-              // React Native expects the object format
-              const fileObj = {
-                uri: String(asset.uri),
-                name: String(fileName),
-                type: String(mimeType),
-              };
-              formData.append('photos[]', fileObj as any);
-              formData.append('files[]', fileObj as any);
+              // Native uses background FileSystem upload
+              try {
+                const parameters: Record<string, string> = {};
+                if (enable_watermark !== undefined) parameters['enable_watermark'] = String(enable_watermark);
+                if (no_watermark !== undefined) parameters['no_watermark'] = String(no_watermark);
+                if (is_platform !== undefined) parameters['is_platform'] = String(is_platform);
+
+                const uploadTask = FileSystem.createUploadTask(
+                  `${baseUrl}groups/${id}/photos/upload`,
+                  asset.uri,
+                  {
+                    httpMethod: 'POST',
+                    headers: { authorization: `Bearer ${token}` },
+                    uploadType: 1, // FileSystem.FileSystemUploadType.MULTIPART
+                    fieldName: 'files[]',
+                    mimeType: mimeType,
+                    parameters,
+                    sessionType: 1, // FileSystem.FileSystemSessionType.BACKGROUND
+                  },
+                  (progressData: any) => {
+                    if (progressData && progressData.totalBytesExpectedToSend) {
+                      const pct = Math.round((progressData.totalBytesSent / progressData.totalBytesExpectedToSend) * 100);
+                      fileProgresses[actualIndex] = pct;
+                      if (onProgress) {
+                        onProgress(Math.round((totalUploaded / totalAssets) * 100), totalUploaded, totalAssets, fileProgresses);
+                      }
+                    }
+                  }
+                );
+                
+                const response = await uploadTask.uploadAsync();
+                console.log(`NATIVE UPLOAD RESPONSE for ${fileName}:`, response.status, response.body);
+                if (response.status < 200 || response.status >= 300) {
+                  throw new Error(`Server returned ${response.status}: ${response.body}`);
+                }
+                results.push(response);
+                
+                fileProgresses[actualIndex] = 100;
+                totalUploaded++;
+                if (onItemSuccess) {
+                  onItemSuccess();
+                }
+                if (onProgress) onProgress(Math.round((totalUploaded / totalAssets) * 100), totalUploaded, totalAssets, fileProgresses);
+              } catch (e) {
+                console.error("Native upload error:", e);
+                lastError = e;
+              }
             }
+            
+            if (Platform.OS !== 'web' && notificationId && Notifications) {
+              try {
+                await Notifications.scheduleNotificationAsync({
+                  identifier: notificationId,
+                  content: {
+                    title: 'Uploading Photos',
+                    body: `Uploading ${totalUploaded} of ${totalAssets}...`,
+                    autoDismiss: false,
+                    sticky: true,
+                  },
+                  trigger: null,
+                });
+              } catch (e) {}
+            }
+
+            await uploadNext();
+          };
+
+          const workers = [];
+          for (let i = 0; i < CONCURRENCY; i++) {
+            workers.push(uploadNext());
+          }
+          await Promise.all(workers);
+          
+          if (Platform.OS !== 'web' && notificationId && Notifications) {
+            try {
+              await Notifications.scheduleNotificationAsync({
+                identifier: notificationId,
+                content: {
+                  title: 'Upload Complete',
+                  body: `Successfully uploaded ${totalUploaded} photos.`,
+                  autoDismiss: true,
+                  sticky: false,
+                },
+                trigger: null,
+              });
+            } catch (e) {}
           }
           
-          if (enable_watermark !== undefined) formData.append('enable_watermark', String(enable_watermark));
-          if (no_watermark !== undefined) formData.append('no_watermark', String(no_watermark));
-          if (is_platform !== undefined) formData.append('is_platform', String(is_platform));
-
-          const result = await new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', `${baseUrl}groups/${id}/photos/upload`);
-            if (token) xhr.setRequestHeader('authorization', `Bearer ${token}`);
-            
-            if (xhr.upload && onProgress) {
-              xhr.upload.onprogress = (event) => {
-                if (event.lengthComputable) {
-                  const percent = Math.round((event.loaded / event.total) * 100);
-                  onProgress(percent);
-                }
-              };
-            }
-            
-            xhr.onload = () => {
-              try {
-                const res = JSON.parse(xhr.responseText);
-                if (xhr.status >= 200 && xhr.status < 300) {
-                  resolve({ data: res });
-                } else {
-                  resolve({ error: { status: xhr.status, data: res } });
-                }
-              } catch(e) {
-                resolve({ error: { status: xhr.status, data: xhr.responseText } });
-              }
-            };
-            
-            xhr.onerror = () => {
-              reject(new Error('Network request failed'));
-            };
-            
-            xhr.send(formData as any);
-          });
-          
-          return result as any;
+          return lastError ? { error: { status: 'FETCH_ERROR', error: String(lastError) } } : { data: { message: 'Uploaded successfully', results } };
         } catch (error: any) {
           return { error: { status: 'FETCH_ERROR', error: String(error) } };
         }
@@ -638,16 +767,58 @@ export const appApi = createApi({
     uploadVideos: builder.mutation<any, { 
       id: string | number; 
       assets: any[]; 
-      onProgress?: (progress: number) => void;
+      onProgress?: (progress: number, current?: number, total?: number) => void;
+      onItemSuccess?: () => void;
     }>({
-      queryFn: async ({ id, assets, onProgress }, api) => {
+      queryFn: async ({ id, assets, onProgress, onItemSuccess }, api) => {
         try {
           const state = api.getState() as any;
           const token = state.app.token;
           const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'https://fablead-studio.com/services/api/';
           
           const { Platform } = require('react-native');
-          const formData = new FormData();
+          const FileSystem = require('expo-file-system/legacy');
+          let Notifications: any = null;
+          try {
+            const Constants = require('expo-constants').default || require('expo-constants');
+            if (Constants.appOwnership !== 'expo') {
+              Notifications = require('expo-notifications');
+              if (Notifications && Notifications.setNotificationHandler) {
+                Notifications.setNotificationHandler({
+                  handleNotification: async () => ({
+                    shouldShowAlert: true,
+                    shouldPlaySound: false,
+                    shouldSetBadge: false,
+                  }),
+                });
+              }
+            }
+          } catch (e) {
+            console.warn('Expo Notifications not available in this environment');
+          }
+          
+          let totalUploaded = 0;
+          const totalAssets = assets.length;
+          
+          let notificationId: string | null = null;
+          if (Platform.OS !== 'web' && Notifications) {
+            try {
+              notificationId = await Notifications.scheduleNotificationAsync({
+                content: {
+                  title: 'Uploading Videos',
+                  body: `Uploading 0 of ${totalAssets}...`,
+                  autoDismiss: false,
+                  sticky: true,
+                },
+                trigger: null,
+              });
+            } catch (e) {
+              console.warn('Failed to schedule notification', e);
+            }
+          }
+
+          let lastError = null;
+          let results = [];
           
           for (let i = 0; i < assets.length; i++) {
             const asset = assets[i];
@@ -655,55 +826,90 @@ export const appApi = createApi({
             const mimeType = asset.mimeType || 'video/mp4';
             
             if (Platform.OS === 'web') {
+              const formData = new FormData();
               const res = await fetch(asset.uri);
               const blob = await res.blob();
               const file = new File([blob], fileName, { type: mimeType });
               formData.append('files[]', file);
+
+              const result = await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', `${baseUrl}groups/${id}/videos/upload`);
+                if (token) xhr.setRequestHeader('authorization', `Bearer ${token}`);
+                xhr.onload = () => resolve(xhr.status >= 200 && xhr.status < 300 ? { data: JSON.parse(xhr.responseText) } : { error: xhr.responseText });
+                xhr.onerror = () => reject(new Error('Network request failed'));
+                xhr.send(formData as any);
+              });
+              results.push(result);
             } else {
-              const fileObj = {
-                uri: String(asset.uri),
-                name: String(fileName),
-                type: String(mimeType),
-              };
-              formData.append('files[]', fileObj as any);
+              try {
+                const uploadTask = FileSystem.createUploadTask(
+                  `${baseUrl}groups/${id}/videos/upload`,
+                  asset.uri,
+                  {
+                    httpMethod: 'POST',
+                    headers: { authorization: `Bearer ${token}` },
+                    uploadType: 1, // FileSystem.FileSystemUploadType.MULTIPART
+                    fieldName: 'files[]',
+                    mimeType: mimeType,
+                    sessionType: 1, // FileSystem.FileSystemSessionType.BACKGROUND
+                  },
+                  (progressData: any) => { }
+                );
+                
+                const response = await uploadTask.uploadAsync();
+                console.log('NATIVE VIDEO UPLOAD RESPONSE:', response.status, response.body);
+                if (response.status < 200 || response.status >= 300) {
+                  throw new Error(`Server returned ${response.status}: ${response.body}`);
+                }
+                results.push(response);
+                
+                totalUploaded++;
+                if (onItemSuccess) {
+                  onItemSuccess();
+                }
+              } catch (e) {
+                console.error("Native video upload error:", e);
+                lastError = e;
+              }
+            }
+            
+            if (onProgress) {
+              onProgress(Math.round((totalUploaded / totalAssets) * 100), totalUploaded, totalAssets);
+            }
+            
+            if (Platform.OS !== 'web' && notificationId && Notifications) {
+              try {
+                await Notifications.scheduleNotificationAsync({
+                  identifier: notificationId,
+                  content: {
+                    title: 'Uploading Videos',
+                    body: `Uploading ${totalUploaded} of ${totalAssets}...`,
+                    autoDismiss: false,
+                    sticky: true,
+                  },
+                  trigger: null,
+                });
+              } catch (e) {}
             }
           }
 
-          const result = await new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', `${baseUrl}groups/${id}/videos/upload`);
-            if (token) xhr.setRequestHeader('authorization', `Bearer ${token}`);
-            
-            if (xhr.upload && onProgress) {
-              xhr.upload.onprogress = (event) => {
-                if (event.lengthComputable) {
-                  const percent = Math.round((event.loaded / event.total) * 100);
-                  onProgress(percent);
-                }
-              };
-            }
-            
-            xhr.onload = () => {
-              try {
-                const res = JSON.parse(xhr.responseText);
-                if (xhr.status >= 200 && xhr.status < 300) {
-                  resolve({ data: res });
-                } else {
-                  resolve({ error: { status: xhr.status, data: res } });
-                }
-              } catch(e) {
-                resolve({ error: { status: xhr.status, data: xhr.responseText } });
-              }
-            };
-            
-            xhr.onerror = () => {
-              reject(new Error('Network request failed'));
-            };
-            
-            xhr.send(formData as any);
-          });
+          if (Platform.OS !== 'web' && notificationId && Notifications) {
+            try {
+              await Notifications.scheduleNotificationAsync({
+                identifier: notificationId,
+                content: {
+                  title: 'Upload Complete',
+                  body: `Successfully uploaded ${totalUploaded} videos.`,
+                  autoDismiss: true,
+                  sticky: false,
+                },
+                trigger: null,
+              });
+            } catch (e) {}
+          }
           
-          return result as any;
+          return lastError ? { error: { status: 'FETCH_ERROR', error: String(lastError) } } : { data: { message: 'Uploaded successfully', results } };
         } catch (error: any) {
           return { error: { status: 'FETCH_ERROR', error: String(error) } };
         }
@@ -751,6 +957,13 @@ export const appApi = createApi({
         body,
       }),
     }),
+    setPassword: builder.mutation<SetPasswordResponse, SetPasswordRequest>({
+      query: (body) => ({
+        url: API_ENDPOINTS.AUTH.SET_PASSWORD,
+        method: 'POST',
+        body,
+      }),
+    }),
     getUserDetails: builder.query<UserDetailsResponse, UserDetailsRequest>({
       query: (body) => ({
         url: API_ENDPOINTS.PLANS.USER_DETAILS,
@@ -770,12 +983,80 @@ export const appApi = createApi({
         method: 'GET',
       }),
     }),
-    updateAvatar: builder.mutation<any, FormData>({
-      query: (formData) => ({
-        url: API_ENDPOINTS.USERS.UPDATE_AVATAR,
-        method: 'POST',
-        body: formData,
-      }),
+    registerFace: builder.mutation<any, { uri: string; type: string; name: string }>({
+      queryFn: async ({ uri, type, name }, { getState }) => {
+        try {
+          const token = (getState() as any).app.token;
+          const formData = new FormData();
+          formData.append('image', { uri, type, name } as any);
+          const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'https://fablead-studio.com/services/api/';
+          
+          const result = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `${baseUrl}${API_ENDPOINTS.FACE.REGISTER}`);
+            if (token) xhr.setRequestHeader('authorization', `Bearer ${token}`);
+            xhr.setRequestHeader('Accept', 'application/json');
+            
+            xhr.onload = () => {
+              try {
+                const res = JSON.parse(xhr.responseText);
+                if (xhr.status >= 200 && xhr.status < 300) {
+                  resolve({ data: res });
+                } else {
+                  resolve({ error: { status: xhr.status, data: res } });
+                }
+              } catch(e) {
+                resolve({ error: { status: xhr.status, data: xhr.responseText } });
+              }
+            };
+            
+            xhr.onerror = () => reject(new Error('Network request failed'));
+            xhr.send(formData as any);
+          });
+          
+          return result as any;
+        } catch (err: any) {
+          return { error: { status: 'FETCH_ERROR', error: String(err) } };
+        }
+      },
+    }),
+    updateAvatar: builder.mutation<any, { userId: string | number; uri: string; type: string; name: string }>({
+      queryFn: async ({ userId, uri, type, name }, { getState }) => {
+        try {
+          const token = (getState() as any).app.token;
+          const formData = new FormData();
+          formData.append('_method', 'PUT');
+          formData.append('avatar', { uri, type, name } as any);
+          const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'https://fablead-studio.com/services/api/';
+          
+          const result = await new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', `${baseUrl}${API_ENDPOINTS.USERS.PROFILE(userId)}`);
+            if (token) xhr.setRequestHeader('authorization', `Bearer ${token}`);
+            xhr.setRequestHeader('Accept', 'application/json');
+            
+            xhr.onload = () => {
+              try {
+                const res = JSON.parse(xhr.responseText);
+                if (xhr.status >= 200 && xhr.status < 300) {
+                  resolve({ data: res });
+                } else {
+                  resolve({ error: { status: xhr.status, data: res } });
+                }
+              } catch(e) {
+                resolve({ error: { status: xhr.status, data: xhr.responseText } });
+              }
+            };
+            
+            xhr.onerror = () => reject(new Error('Network request failed'));
+            xhr.send(formData as any);
+          });
+          
+          return result as any;
+        } catch (err: any) {
+          return { error: { status: 'FETCH_ERROR', error: String(err) } };
+        }
+      },
     }),
   }),
 });
@@ -786,6 +1067,7 @@ export const {
   useVerifyOtpMutation,
   useRegisterMutation,
   useCheckPasswordMutation,
+  useSetPasswordMutation,
   useGetUserDetailsQuery,
   useGetUserProfileQuery,
   useGetFaceStatusQuery,
@@ -824,4 +1106,5 @@ export const {
   useUpdateBusinessSettingsMutation,
   useGetPhotographerPlansQuery,
   useUpdateAvatarMutation,
+  useRegisterFaceMutation,
 } = appApi;

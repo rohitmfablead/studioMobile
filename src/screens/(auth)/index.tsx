@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ImageBackground, StatusBar } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ImageBackground, StatusBar, Image } from 'react-native';
 import { router } from '../../utils/routerShim';
 import { useState, useEffect, useRef } from 'react';
 import { Camera, ScanFace, Lock, Zap, ArrowRight } from 'lucide-react-native';
@@ -71,7 +71,10 @@ export default function OnboardingScreen() {
         <View style={styles.overlay}>
           {/* Top Header */}
           <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-            <Text style={styles.logoText}>Fablead AI</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Image source={require('../../../assets/images/icon.png')} style={{ width: 32, height: 32, borderRadius: 8, marginRight: 8 }} resizeMode="contain" />
+              <Text style={styles.logoText}>VisionGallery</Text>
+            </View>
             <TouchableOpacity onPress={handleSkip} style={styles.skipBtn}>
               <Text style={styles.skipText}>Skip</Text>
             </TouchableOpacity>

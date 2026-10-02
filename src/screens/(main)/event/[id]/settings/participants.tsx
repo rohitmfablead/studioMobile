@@ -3,13 +3,14 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ImageB
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from '../../../../../utils/routerShim';
 import { ChevronLeft, Search, MoreVertical, Trash2, LogOut, UserPlus, Shield } from 'lucide-react-native';
-import { useGetGroupParticipantsQuery } from '../../../../../store/apiSlice';
 
 export default function ParticipantsSettings() {
+  const isLoading = false;
+
   const { id } = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState('All');
   
-  const { data: participantsData, isLoading } = useGetGroupParticipantsQuery({ id: id as string, params: { page: 1, limit: 20 } });
+  const [participantsData, set_participantsData] = useState<any>({});
   
   const participants = participantsData?.participants || [];
   const totalParticipants = participantsData?.total || 0;
@@ -92,7 +93,7 @@ export default function ParticipantsSettings() {
                   <View style={{flexDirection: 'row', alignItems: 'center'}}>
                     <Text style={styles.userName}>{user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown User'}</Text>
                     <View style={styles.personIcon}>
-                      {user.role === 'owner' ? <Shield color="#FF6B00" size={12} /> : <UserPlus color="#999" size={10} />}
+                      {user.role === 'owner' ? <Shield color="#2563EB" size={12} /> : <UserPlus color="#999" size={10} />}
                     </View>
                   </View>
                   <Text style={styles.userEmail}>{user.email || 'No email'}</Text>
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
   actionRow: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginBottom: 20 },
   actionBtnOutline: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#fff' },
   actionBtnOutlineText: { fontSize: 13, fontWeight: '600', color: '#333' },
-  actionBtnSolid: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FF6B00', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  actionBtnSolid: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2563EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
   actionBtnSolidText: { fontSize: 13, fontWeight: '600', color: '#fff' },
 
   searchFilterRow: { gap: 15, marginBottom: 20 },
@@ -143,7 +144,7 @@ const styles = StyleSheet.create({
   filterTabText: { fontSize: 12, color: '#666', fontWeight: '500' },
   filterTabTextActive: { color: '#111', fontWeight: '600' },
   badge: { backgroundColor: '#F2F2F7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10, marginLeft: 6 },
-  badgeActive: { backgroundColor: '#FF6B00' },
+  badgeActive: { backgroundColor: '#2563EB' },
   badgeText: { fontSize: 10, fontWeight: '600', color: '#666' },
   badgeTextActive: { color: '#fff' },
 

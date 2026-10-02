@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from '../../../../../utils/routerShim';
 import { ChevronLeft, Download, Search, RefreshCw, Layers, FileText } from 'lucide-react-native';
-import { useGetGroupDownloadHistoryQuery } from '../../../../../store/apiSlice';
 
 export default function DownloadHistory() {
+  const isLoading = false;
+
   const { id } = useLocalSearchParams();
-  const { data, isLoading } = useGetGroupDownloadHistoryQuery(id as string);
+  const [data, setData] = useState<any>({});
 
   const summary = data?.summary || { total_downloads: 0, total_unique: 0, total_repetitive: 0, total_bulk: 0 };
   const records = data?.data || [];
@@ -35,8 +36,8 @@ export default function DownloadHistory() {
         {/* Overview Stats */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.statsRow}>
           <View style={styles.statCard}>
-            <View style={[styles.iconBox, { backgroundColor: '#FFF0E5' }]}>
-              <Download color="#FF6B00" size={16} />
+            <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}>
+              <Download color="#2563EB" size={16} />
             </View>
             <View>
               <Text style={styles.statVal}>{summary.total_downloads}</Text>
@@ -66,7 +67,7 @@ export default function DownloadHistory() {
 
           <View style={styles.statCard}>
             <View style={[styles.iconBox, { backgroundColor: '#FEF3C7' }]}>
-              <Layers color="#D97706" size={16} />
+              <Layers color="#1D4ED8" size={16} />
             </View>
             <View>
               <Text style={styles.statVal}>{summary.total_bulk}</Text>

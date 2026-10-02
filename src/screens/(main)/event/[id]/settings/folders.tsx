@@ -3,15 +3,19 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from '../../../../../utils/routerShim';
 import { ChevronLeft, FolderPlus, ArrowRightLeft, AlignJustify, Folder, MoreVertical } from 'lucide-react-native';
-import { useGetGroupFoldersQuery, useCreateGroupFolderMutation, useUpdateGroupFolderMutation, useDeleteGroupFolderMutation } from '../../../../../store/apiSlice';
 import { toast } from '../../../../../utils/toast';
 
 export default function FoldersSettings() {
+  const refetch = () => {};
+  const isCreating = false;
+  const isUpdating = false;
+  const isLoading = false;
+
   const { id } = useLocalSearchParams();
-  const { data: foldersData, isLoading, refetch } = useGetGroupFoldersQuery(id as string);
-  const [createGroupFolder, { isLoading: isCreating }] = useCreateGroupFolderMutation();
-  const [updateGroupFolder, { isLoading: isUpdating }] = useUpdateGroupFolderMutation();
-  const [deleteGroupFolder] = useDeleteGroupFolderMutation();
+  const [foldersData, set_foldersData] = useState<any>({});
+  const createGroupFolder = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
+  const updateGroupFolder = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
+  const deleteGroupFolder = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
   
   const folders = foldersData?.data || [];
   
@@ -31,13 +35,13 @@ export default function FoldersSettings() {
     if (!folderName.trim()) return;
     try {
       if (editingId) {
-        const res = await updateGroupFolder({ id: id as string, folderId: editingId, body: { name: folderName, description: folderDesc } }).unwrap();
+        const res = await updateGroupFolder({ id: id as string, folderId: editingId, body: { name: folderName, description: folderDesc } });
         if (res.success) {
           setShowModal(false);
           refetch();
         }
       } else {
-        const res = await createGroupFolder({ id: id as string, body: { name: folderName, description: folderDesc } }).unwrap();
+        const res = await createGroupFolder({ id: id as string, body: { name: folderName, description: folderDesc } });
         if (res.success) {
           setShowModal(false);
           refetch();
@@ -75,7 +79,7 @@ export default function FoldersSettings() {
                 style: 'destructive',
                 onPress: async () => {
                   try {
-                    const res = await deleteGroupFolder({ id: id as string, folderId: folder.id }).unwrap();
+                    const res = await deleteGroupFolder({ id: id as string, folderId: folder.id });
                     if (res.success) refetch();
                   } catch (err) {
                     toast.error('Error', 'Failed to delete folder.');
@@ -123,7 +127,7 @@ export default function FoldersSettings() {
 
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 50 }}>
         {isLoading ? (
-          <ActivityIndicator size="large" color="#FF6B00" style={{ marginTop: 50 }} />
+          <ActivityIndicator size="large" color="#2563EB" style={{ marginTop: 50 }} />
         ) : folders.length === 0 ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIconBox}>
@@ -137,7 +141,7 @@ export default function FoldersSettings() {
             <View key={folder.id || index} style={styles.folderCard}>
               <View style={styles.folderLeft}>
                 <View style={styles.folderIconBox}>
-                  <Folder color="#FF6B00" size={20} fill="#FFF0E5" />
+                  <Folder color="#2563EB" size={20} fill="#EFF6FF" />
                 </View>
                 <View>
                   <Text style={styles.folderName}>{folder.name}</Text>
@@ -200,7 +204,7 @@ const styles = StyleSheet.create({
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   actionBtnOutline: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 8, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, backgroundColor: '#F9FAFB' },
   actionBtnOutlineText: { fontSize: 13, fontWeight: '600', color: '#333', marginLeft: 6 },
-  saveBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FF6B00', paddingVertical: 8, borderRadius: 8 },
+  saveBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#2563EB', paddingVertical: 8, borderRadius: 8 },
   saveBtnText: { color: '#fff', fontWeight: '600', fontSize: 13, marginLeft: 6 },
 
   content: { flex: 1, padding: 15 },
@@ -211,7 +215,7 @@ const styles = StyleSheet.create({
 
   folderCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, marginBottom: 10 },
   folderLeft: { flexDirection: 'row', alignItems: 'center' },
-  folderIconBox: { width: 40, height: 40, borderRadius: 10, backgroundColor: '#FFF0E5', alignItems: 'center', justifyContent: 'center', marginRight: 15 },
+  folderIconBox: { width: 40, height: 40, borderRadius: 10, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center', marginRight: 15 },
   folderName: { fontSize: 15, fontWeight: '600', color: '#111', marginBottom: 2 },
   folderInfo: { fontSize: 12, color: '#666' },
   moreBtn: { padding: 5 },
@@ -225,6 +229,6 @@ const styles = StyleSheet.create({
   modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 10 },
   modalCancelBtn: { paddingHorizontal: 15, paddingVertical: 10, borderRadius: 8 },
   modalCancelText: { color: '#666', fontWeight: '600', fontSize: 14 },
-  modalCreateBtn: { backgroundColor: '#FF6B00', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, minWidth: 80, alignItems: 'center' },
+  modalCreateBtn: { backgroundColor: '#2563EB', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, minWidth: 80, alignItems: 'center' },
   modalCreateText: { color: '#fff', fontWeight: '600', fontSize: 14 },
 });

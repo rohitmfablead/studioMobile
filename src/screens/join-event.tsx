@@ -3,9 +3,9 @@ import { AlertCircle, ArrowRight, UserPlus, X } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, ImageBackground, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useJoinGroupMutation } from '../store/apiSlice';
 
 export default function JoinEventScreen() {
+  const isLoading = false;
   const { id } = useLocalSearchParams();
   const initialCode = typeof id === 'string' && id.length === 6 ? id.split('') : ['', '', '', '', '', ''];
   const [code, setCode] = useState(initialCode.length === 6 ? initialCode : ['', '', '', '', '', '']);
@@ -29,7 +29,7 @@ export default function JoinEventScreen() {
     }
   };
 
-  const [joinGroup, { isLoading }] = useJoinGroupMutation();
+  const joinGroup = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
 
   const handleJoin = async () => {
     setErrorMessage('');
@@ -43,7 +43,7 @@ export default function JoinEventScreen() {
       const res = await joinGroup({
         joinCode,
         is_platform: Platform.OS,
-      }).unwrap();
+      });
 
       // Navigate to participant dashboard on success
       router.replace('/(main)/dashboard');
@@ -57,7 +57,7 @@ export default function JoinEventScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="dark" />
+      <StatusBar barStyle="dark-content" />
       
       {/* Header */}
       <SafeAreaView edges={['top']} style={{ zIndex: 10 }}>
@@ -75,7 +75,7 @@ export default function JoinEventScreen() {
 
           <View style={styles.glassCard}>
             <View style={styles.iconRing}>
-              <UserPlus color="#FF6B00" size={32} />
+              <UserPlus color="#2563EB" size={32} />
             </View>
 
             <Text style={styles.title}>Enter Event Code</Text>
@@ -96,13 +96,13 @@ export default function JoinEventScreen() {
                   value={digit}
                   onChangeText={(text) => handleCodeChange(text, index)}
                   onKeyPress={(e) => handleKeyPress(e, index)}
-                  selectionColor="#FF6B00"
+                  selectionColor="#2563EB"
                 />
               ))}
             </View>
 
             <View style={styles.alertBanner}>
-              <AlertCircle color="#FF9500" size={18} />
+              <AlertCircle color="#2563EB" size={18} />
               <Text style={styles.alertText}>You can also join via shared link</Text>
             </View>
 
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#FFF5E6',
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -184,33 +184,33 @@ const styles = StyleSheet.create({
     color: '#111',
   },
   codeBoxActive: {
-    borderColor: '#FF6B00',
-    backgroundColor: '#FFF5E6',
+    borderColor: '#2563EB',
+    backgroundColor: '#EFF6FF',
   },
 
   alertBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF5E6',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#FFDDB3',
+    borderColor: '#BFDBFE',
     marginBottom: 40,
     width: '100%',
   },
-  alertText: { color: '#FF9500', fontSize: 14, fontWeight: '600', marginLeft: 10 },
+  alertText: { color: '#2563EB', fontSize: 14, fontWeight: '600', marginLeft: 10 },
 
   joinBtn: {
-    backgroundColor: '#FF6B00',
+    backgroundColor: '#2563EB',
     width: '100%',
     paddingVertical: 18,
     borderRadius: 100,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#FF6B00',
+    shadowColor: '#2563EB',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,

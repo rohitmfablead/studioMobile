@@ -1,9 +1,8 @@
 import { Bell, Calendar, Camera, Image as ImageIcon, LogOut, Plus, Trash2, Users } from 'lucide-react-native';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { ActivityIndicator, Animated, Dimensions, Image, ImageBackground, Platform, RefreshControl, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
-import { useDeleteGroupMutation, useGetGroupsQuery, useGetUserProfileQuery } from '../../store/apiSlice';
 import { router } from '../../utils/routerShim';
 
 export default function PhotographerDashboard() {
@@ -11,29 +10,29 @@ export default function PhotographerDashboard() {
   const userRole = useSelector((state: any) => state.app.user?.role);
   const isPhotographer = userRole === 'photographer';
   
-  const { data: userProfileData, refetch: refetchProfile } = useGetUserProfileQuery(userId as string, { skip: !userId });
+  // Static Mock Data
+  const [userProfileData, setUserProfileData] = useState<any>({
+    user: { id: userId, first_name: 'John', name: 'John Doe', role: userRole, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80' }
+  });
   const user = userProfileData?.user;
 
   const insets = useSafeAreaInsets();
-  const { data: groupsData, isLoading, refetch: refetchGroups } = useGetGroupsQuery();
+  
+  const [groupsData, setGroupsData] = useState<any>({
+    groups: [
+      { id: '1', name: 'Wedding Photos', type: 'Private', photoCount: 150, memberCount: 10, eventDate: '2026-10-15', coverImage: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80' },
+      { id: '2', name: 'Birthday Party', type: 'Public', photoCount: 80, memberCount: 25, eventDate: '2026-11-01', coverImage: 'https://images.unsplash.com/photo-1551316679-9c6ae9dec224?q=80&w=1000&auto=format&fit=crop' }
+    ]
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const EVENTS = groupsData?.groups || [];
 
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    try {
-      await Promise.all([
-        refetchGroups(),
-        userId ? refetchProfile() : Promise.resolve(),
-      ]);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refetchGroups, refetchProfile, userId]);
+    setTimeout(() => setRefreshing(false), 1000);
+  }, []);
 
-  const [deleteGroup] = useDeleteGroupMutation();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ id: string | number, isOwner: boolean } | null>(null);
 
@@ -44,16 +43,9 @@ export default function PhotographerDashboard() {
 
   const confirmDelete = async () => {
     if (!itemToDelete) return;
-    try {
-      await deleteGroup(itemToDelete.id).unwrap();
-      refetchGroups();
-    } catch (e) {
-      console.error(e);
-      alert(itemToDelete.isOwner ? 'Failed to delete event' : 'Failed to leave event');
-    } finally {
-      setDeleteModalVisible(false);
-      setItemToDelete(null);
-    }
+    setGroupsData({ groups: groupsData.groups.filter((g: any) => g.id !== itemToDelete.id) });
+    setDeleteModalVisible(false);
+    setItemToDelete(null);
   };
 
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -88,7 +80,7 @@ export default function PhotographerDashboard() {
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
         scrollEventThrottle={16}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF6B00" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563EB" />
         }
       >
         {/* Premium Header */}
@@ -114,8 +106,8 @@ export default function PhotographerDashboard() {
             {/* Quick Stats/Actions */}
             <View style={styles.statsCard}>
               <TouchableOpacity style={styles.actionItem} onPress={() => router.push('/create-event')}>
-                <View style={[styles.iconBox, { backgroundColor: '#FFF0E5' }]}>
-                  <Plus color="#FF6B00" size={24} />
+                <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}>
+                  <Plus color="#2563EB" size={24} />
                 </View>
                 <Text style={styles.actionText}>New Group</Text>
               </TouchableOpacity>
@@ -154,11 +146,11 @@ export default function PhotographerDashboard() {
           </View>
 
           {isLoading ? (
-            <ActivityIndicator style={{ marginTop: 40 }} color="#FF6B00" size="large" />
+            <ActivityIndicator style={{ marginTop: 40 }} color="#2563EB" size="large" />
           ) : EVENTS.length === 0 ? (
             <View style={styles.emptyStateContainer}>
               <View style={styles.emptyStateIconBox}>
-                <ImageIcon color="#FF6B00" size={32} />
+                <ImageIcon color="#2563EB" size={32} />
               </View>
               <Text style={styles.emptyStateTitle}>No Events Yet</Text>
               <Text style={styles.emptyStateDesc}>You haven't joined or created any events yet. Create or join a group to get started.</Text>
@@ -202,7 +194,7 @@ export default function PhotographerDashboard() {
                   </View>
 
                   <TouchableOpacity
-                    style={[styles.cardDeleteBtn, { backgroundColor: (item.owner?.id == userId || item.user_id == userId) ? '#FEF2F2' : '#FFF3E0' }]}
+                    style={[styles.cardDeleteBtn, { backgroundColor: (item.owner?.id == userId || item.user_id == userId) ? '#FEF2F2' : '#EFF6FF' }]}
                     onPress={() => handleDelete(item.id, item.owner?.id == userId || item.user_id == userId)}
                   >
                     {(item.owner?.id == userId || item.user_id == userId) ? (
@@ -212,8 +204,8 @@ export default function PhotographerDashboard() {
                       </>
                     ) : (
                       <>
-                        <LogOut color="#FF6B00" size={14} />
-                        <Text style={[styles.cardDeleteText, { color: '#FF6B00' }]}>Leave</Text>
+                        <LogOut color="#2563EB" size={14} />
+                        <Text style={[styles.cardDeleteText, { color: '#2563EB' }]}>Leave</Text>
                       </>
                     )}
                   </TouchableOpacity>
@@ -293,19 +285,19 @@ const styles = StyleSheet.create({
   contentPadding: { paddingHorizontal: 20 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   sectionTitle: { fontSize: 20, fontWeight: '800', color: '#111' },
-  seeAll: { color: '#FF6B00', fontWeight: '700', fontSize: 14 },
+  seeAll: { color: '#2563EB', fontWeight: '700', fontSize: 14 },
 
   emptyStateContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40, paddingHorizontal: 20 },
-  emptyStateIconBox: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#FFF0E5', alignItems: 'center', justifyContent: 'center', marginBottom: 15 },
+  emptyStateIconBox: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center', marginBottom: 15 },
   emptyStateTitle: { fontSize: 20, fontWeight: '800', color: '#111', marginBottom: 10 },
   emptyStateDesc: { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 22, paddingHorizontal: 10, marginBottom: 25 },
-  emptyStateBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FF6B00', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12, shadowColor: '#FF6B00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },
+  emptyStateBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#2563EB', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12, shadowColor: '#2563EB', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },
   emptyStateBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginLeft: 8 },
 
   eventCard: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB', marginBottom: 20, overflow: 'hidden' },
   cardImageContainer: { height: 160, width: '100%', position: 'relative' },
   cardImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-  badgePrivate: { position: 'absolute', top: 12, right: 12, backgroundColor: '#FF6B00', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
+  badgePrivate: { position: 'absolute', top: 12, right: 12, backgroundColor: '#2563EB', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
   badgePrivateText: { color: '#fff', fontSize: 10, fontWeight: 'bold', textTransform: 'lowercase' },
   cardContent: { padding: 16 },
   cardTitle: { fontSize: 16, fontWeight: '800', color: '#111', marginBottom: 12 },

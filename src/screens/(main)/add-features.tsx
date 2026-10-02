@@ -90,8 +90,8 @@ const styles = StyleSheet.create({
   
   glassHeader: { padding: 25, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#18181B' },
   closeBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#18181B', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#27272A' },
-  planBadge: { backgroundColor: 'rgba(255, 107, 0, 0.15)', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, marginBottom: 8 },
-  planBadgeText: { color: '#FF6B00', fontSize: 9, fontWeight: '800', letterSpacing: 1 },
+  planBadge: { backgroundColor: 'rgba(37, 99, 235, 0.15)', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, marginBottom: 8 },
+  planBadgeText: { color: '#2563EB', fontSize: 9, fontWeight: '800', letterSpacing: 1 },
   headerTitle: { fontSize: 18, fontWeight: '800', color: '#fff' },
   
   body: { flex: 1 },
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   
   totalBox: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 20, paddingHorizontal: 10 },
   totalLabel: { fontSize: 14, fontWeight: '600', color: '#A1A1AA' },
-  totalValue: { fontSize: 24, fontWeight: '800', color: '#FF6B00' },
+  totalValue: { fontSize: 24, fontWeight: '800', color: '#2563EB' },
   
   noticeBox: { backgroundColor: 'rgba(245, 158, 11, 0.05)', borderWidth: 1, borderColor: 'rgba(245, 158, 11, 0.2)', borderRadius: 12, padding: 15, marginBottom: 30 },
   noticeText: { fontSize: 12, color: '#D4D4D8', lineHeight: 18 },
@@ -119,6 +119,6 @@ const styles = StyleSheet.create({
   footerBtns: { flexDirection: 'row', gap: 15 },
   skipBtn: { flex: 1, backgroundColor: '#18181B', borderWidth: 1, borderColor: '#27272A', borderRadius: 12, paddingVertical: 16, alignItems: 'center' },
   skipBtnText: { color: '#A1A1AA', fontWeight: '700', fontSize: 14 },
-  proceedBtn: { flex: 2, flexDirection: 'row', backgroundColor: '#FF6B00', borderRadius: 12, paddingVertical: 16, alignItems: 'center', justifyContent: 'center', shadowColor: '#FF6B00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
+  proceedBtn: { flex: 2, flexDirection: 'row', backgroundColor: '#2563EB', borderRadius: 12, paddingVertical: 16, alignItems: 'center', justifyContent: 'center', shadowColor: '#2563EB', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
   proceedBtnText: { color: '#000', fontWeight: '800', fontSize: 14, letterSpacing: 0.5 },
 });

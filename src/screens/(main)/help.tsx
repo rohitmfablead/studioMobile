@@ -88,7 +88,7 @@ export default function HelpScreen() {
             <Text style={styles.infoText}>A-5001, Ascon Plaza, Adajan, Surat, Gujarat 395009</Text>
           </View>
           <View style={styles.infoCard}>
-            <Mail color="#F97316" size={20} style={styles.infoIcon} />
+            <Mail color="#2563EB" size={20} style={styles.infoIcon} />
             <Text style={styles.infoTitle}>Email</Text>
             <Text style={styles.infoText}>info@fableadtechnolabs.com</Text>
           </View>
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   pickerFake: { backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
   pickerFakeText: { fontSize: 14, color: '#111827' },
   
-  submitBtn: { backgroundColor: '#F97316', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 8, marginTop: 5 },
+  submitBtn: { backgroundColor: '#2563EB', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 8, marginTop: 5 },
   submitBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
   
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 25 },

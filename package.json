@@ -1,5 +1,5 @@
 {
-  "name": "photosharemobile",
+  "name": "visiongallery",
   "main": "node_modules/expo/AppEntry.js",
   "version": "1.0.0",
   "dependencies": {
@@ -17,8 +17,11 @@
     "expo-glass-effect": "~57.0.1",
     "expo-image": "~57.0.1",
     "expo-image-picker": "~57.0.6",
+    "expo-linear-gradient": "~57.0.1",
     "expo-linking": "~57.0.3",
     "expo-media-library": "~57.0.3",
+    "expo-network": "~57.0.1",
+    "expo-notifications": "~57.0.7",
     "expo-secure-store": "~57.0.1",
     "expo-splash-screen": "~57.0.4",
     "expo-status-bar": "~57.0.1",

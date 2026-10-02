@@ -3,13 +3,15 @@ import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from '../../utils/routerShim';
 import { ChevronLeft, Check, Camera, Image as ImageIcon } from 'lucide-react-native';
-import { useGetBusinessSettingsQuery, useUpdateBusinessSettingsMutation } from '../../store/apiSlice';
 import { toast } from '../../utils/toast';
 import { useState, useEffect } from 'react';
 
 export default function FlipbookScreen() {
+  const isSaving = false;
+  const isLoading = false;
+
   const insets = useSafeAreaInsets();
-  const { data, isLoading } = useGetBusinessSettingsQuery();
+  const [data, setData] = useState<any>({});
   const settings = data?.settings;
 
   const [businessName, setBusinessName] = useState('');
@@ -28,7 +30,7 @@ export default function FlipbookScreen() {
       setLogoUrl(result.assets[0].uri);
     }
   };
-  const [updateBusinessSettings, { isLoading: isSaving }] = useUpdateBusinessSettingsMutation();
+  const updateBusinessSettings = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
 
   const handleSave = async () => {
     try {
@@ -48,7 +50,7 @@ export default function FlipbookScreen() {
         }
       }
 
-      await updateBusinessSettings(formData).unwrap();
+      await updateBusinessSettings(formData);
       toast.success('Saved!', 'Business settings updated successfully.');
     } catch (err) {
       console.error(err);
@@ -79,7 +81,7 @@ export default function FlipbookScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {isLoading && (
           <View style={{ padding: 40, alignItems: 'center' }}>
-            <ActivityIndicator size="large" color="#FF6B00" />
+            <ActivityIndicator size="large" color="#2563EB" />
           </View>
         )}
         {!isLoading && <>
@@ -132,7 +134,7 @@ export default function FlipbookScreen() {
                <ImageBackground source={{ uri: logoUrl }} style={{ width: 80, height: 80, alignSelf: 'center', marginBottom: 10 }} resizeMode="contain" />
             ) : (
               <View style={styles.uploadIconWrap}>
-                <ImageIcon color="#FF6B00" size={24} />
+                <ImageIcon color="#2563EB" size={24} />
               </View>
             )}
             <Text style={styles.uploadTitle}>{logoUrl ? 'Change Logo' : 'Upload Transparent Logo'}</Text>
@@ -147,7 +149,7 @@ export default function FlipbookScreen() {
             <Switch 
               value={syncPortfolio} 
               onValueChange={setSyncPortfolio}
-              trackColor={{ true: '#FF6B00' }} 
+              trackColor={{ true: '#2563EB' }} 
             />
           </View>
         </View>
@@ -162,7 +164,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 20 },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#18181B', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#27272A' },
   headerTitle: { fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: 0.5 },
-  saveBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FF6B00', alignItems: 'center', justifyContent: 'center', shadowColor: '#FF6B00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8 },
+  saveBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center', shadowColor: '#2563EB', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8 },
   
   scrollContent: { padding: 20, paddingBottom: 40 },
   
@@ -192,7 +194,7 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontSize: 15, color: '#fff' },
   
   uploadBox: { backgroundColor: '#09090B', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#27272A', borderStyle: 'dashed', alignItems: 'center', marginBottom: 20 },
-  uploadIconWrap: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(255, 107, 0, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  uploadIconWrap: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(37, 99, 235, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   uploadTitle: { fontSize: 14, fontWeight: '600', color: '#fff', marginBottom: 4 },
   uploadDesc: { fontSize: 12, color: '#A1A1AA' },
   

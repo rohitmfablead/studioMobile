@@ -36,7 +36,7 @@ export default function BrandingSettings() {
             <Text style={styles.switchTitle}>Show My Branding</Text>
             <Text style={styles.switchSub}>Turn off to show a Sponsor's branding first</Text>
           </View>
-          <Switch value={showBranding} onValueChange={setShowBranding} trackColor={{ false: '#E5E5EA', true: '#FF6B00' }} />
+          <Switch value={showBranding} onValueChange={setShowBranding} trackColor={{ false: '#E5E5EA', true: '#2563EB' }} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   headerContent: { paddingBottom: 20 },
   headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
   headerSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
-  saveBtn: { backgroundColor: '#FF6B00', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+  saveBtn: { backgroundColor: '#2563EB', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
   saveBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
   
   content: { flex: 1, padding: 15 },

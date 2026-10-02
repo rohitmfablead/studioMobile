@@ -39,7 +39,7 @@ const privacyData = [
     id: 'cookies',
     title: 'Tracking & Cookies',
     subtitle: 'How we use cookies and tracking technologies',
-    icon: <Cookie color="#F59E0B" size={24} />,
+    icon: <Cookie color="#2563EB" size={24} />,
     iconBg: '#FFFBEB',
     intro: 'We use cookies and similar tracking technologies to improve your experience. You can control cookie settings in your browser, though some features may not work without essential cookies.',
     points: [
@@ -104,7 +104,7 @@ export default function PrivacyScreen() {
             <View style={styles.pointsList}>
               {item.points.map((pt, index) => (
                 <View key={index} style={styles.pointRow}>
-                  <CheckCircle2 color="#F97316" size={16} style={styles.pointIcon} />
+                  <CheckCircle2 color="#2563EB" size={16} style={styles.pointIcon} />
                   <Text style={styles.pointText}>{pt}</Text>
                 </View>
               ))}

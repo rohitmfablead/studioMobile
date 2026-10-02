@@ -89,11 +89,11 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
               ) : (
                 options.tabBarIcon && options.tabBarIcon({
                   focused: isFocused,
-                  color: isFocused ? '#FF6B00' : '#8E8E93',
+                  color: isFocused ? '#2563EB' : '#8E8E93',
                   size: 24
                 })
               )}
-              <Text style={[styles.label, { color: isFocused ? '#FF6B00' : '#8E8E93' }]}>
+              <Text style={[styles.label, { color: isFocused ? '#2563EB' : '#8E8E93' }]}>
                 {label as string}
               </Text>
             </TouchableOpacity>
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   avatarRingActive: {
-    borderColor: '#FF6B00',
+    borderColor: '#2563EB',
   },
   avatarImg: {
     width: '100%',
@@ -162,6 +162,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarFallbackActive: {
-    backgroundColor: '#FF6B00',
+    backgroundColor: '#2563EB',
   },
 });

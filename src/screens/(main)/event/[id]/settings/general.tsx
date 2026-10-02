@@ -3,12 +3,15 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Switch
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from '../../../../../utils/routerShim';
 import { ChevronLeft, Folder, Users, Calendar, Image as ImageIcon, Globe, Lock, CheckCircle2, Droplet, ArrowDownUp } from 'lucide-react-native';
-import { useGetGroupDetailsQuery, useUpdateGroupDetailsMutation } from '../../../../../store/apiSlice';
 
 export default function GeneralSettings() {
+  const refetch = () => {};
+  const isUpdating = false;
+  const isLoading = false;
+
   const { id } = useLocalSearchParams();
-  const { data, isLoading, refetch } = useGetGroupDetailsQuery(id as string);
-  const [updateGroupDetails, { isLoading: isUpdating }] = useUpdateGroupDetailsMutation();
+  const [data, setData] = useState<any>({});
+  const updateGroupDetails = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
 
   const [groupName, setGroupName] = useState('');
   const [eventType, setEventType] = useState('');
@@ -52,7 +55,7 @@ export default function GeneralSettings() {
         enableWatermark: watermark,
         sortBy: sortOrder === 'Oldest' ? 'oldest' : 'newest',
       };
-      const res = await updateGroupDetails({ id: id as string, body: payload }).unwrap();
+      const res = await updateGroupDetails({ id: id as string, body: payload });
       if (res.success) {
         setToastMsg('Settings updated successfully!');
         setTimeout(() => setToastMsg(''), 3000);
@@ -90,15 +93,15 @@ export default function GeneralSettings() {
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 50 }}>
         {isLoading ? (
           <View style={{ padding: 20, alignItems: 'center' }}>
-            <ActivityIndicator size="large" color="#FF6B00" />
+            <ActivityIndicator size="large" color="#2563EB" />
           </View>
         ) : (
           <>
             {/* Metric Cards */}
             <View style={styles.metricsRow}>
-              <View style={[styles.metricCard, { backgroundColor: '#FFF9F2' }]}>
-                <View style={[styles.iconBox, { backgroundColor: '#FFEDD5' }]}>
-                  <Folder color="#FF6B00" size={16} />
+              <View style={[styles.metricCard, { backgroundColor: '#EFF6FF' }]}>
+                <View style={[styles.iconBox, { backgroundColor: '#DBEAFE' }]}>
+                  <Folder color="#2563EB" size={16} />
                 </View>
                 <View>
                   <Text style={styles.metricVal}>{photoCount}</Text>
@@ -118,7 +121,7 @@ export default function GeneralSettings() {
 
             {/* Cover Image */}
             <Text style={styles.sectionTitle}>
-              <ImageIcon color="#FF6B00" size={16} style={{marginRight: 6}} /> Cover Image
+              <ImageIcon color="#2563EB" size={16} style={{marginRight: 6}} /> Cover Image
             </Text>
             <TouchableOpacity style={[styles.uploadBox, coverImage ? { padding: 0, overflow: 'hidden' } : {}]}>
               {coverImage ? (
@@ -138,7 +141,7 @@ export default function GeneralSettings() {
 
         <View style={styles.rowInputs}>
           <View style={{flex: 1, marginRight: 10}}>
-            <Text style={styles.inputLabel}><Lock color="#FF6B00" size={14} /> Group Visibility</Text>
+            <Text style={styles.inputLabel}><Lock color="#2563EB" size={14} /> Group Visibility</Text>
             <View style={styles.toggleGroup}>
               <TouchableOpacity style={[styles.toggleBtn, visibility === 'Public' && styles.toggleBtnActive]} onPress={() => setVisibility('Public')}>
                 <Globe color={visibility === 'Public' ? '#111' : '#666'} size={14} />
@@ -159,7 +162,7 @@ export default function GeneralSettings() {
           </View>
         </View>
 
-        <Text style={styles.inputLabel}><Calendar color="#FF6B00" size={14} /> Event Date</Text>
+        <Text style={styles.inputLabel}><Calendar color="#2563EB" size={14} /> Event Date</Text>
         <View style={styles.inputIconWrapper}>
           <TextInput style={styles.input} placeholder="dd/mm/yyyy" value={eventDate} onChangeText={setEventDate} />
           <Calendar color="#8E8E93" size={18} style={styles.inputIconRight} />
@@ -170,33 +173,33 @@ export default function GeneralSettings() {
 
         {/* Photo Sort Order */}
         <Text style={styles.sectionTitle}>
-          <ArrowDownUp color="#FF6B00" size={16} /> Photo Sort Order
+          <ArrowDownUp color="#2563EB" size={16} /> Photo Sort Order
         </Text>
         <View style={styles.cardsRow}>
           <TouchableOpacity style={[styles.selectionCard, sortOrder === 'Newest' && styles.selectionCardActive]} onPress={() => setSortOrder('Newest')}>
             <Text style={[styles.scTitle, sortOrder === 'Newest' && { color: '#111' }]}>Newest First</Text>
             <Text style={styles.scSub}>Show newest photos first</Text>
-            {sortOrder === 'Newest' && <CheckCircle2 color="#FF6B00" size={16} style={styles.scCheck} />}
+            {sortOrder === 'Newest' && <CheckCircle2 color="#2563EB" size={16} style={styles.scCheck} />}
           </TouchableOpacity>
           <TouchableOpacity style={[styles.selectionCard, sortOrder === 'Oldest' && styles.selectionCardActive]} onPress={() => setSortOrder('Oldest')}>
             <Text style={[styles.scTitle, sortOrder === 'Oldest' && { color: '#111' }]}>Oldest First</Text>
             <Text style={styles.scSub}>Show oldest photos first</Text>
-            {sortOrder === 'Oldest' && <CheckCircle2 color="#FF6B00" size={16} style={styles.scCheck} />}
+            {sortOrder === 'Oldest' && <CheckCircle2 color="#2563EB" size={16} style={styles.scCheck} />}
           </TouchableOpacity>
         </View>
 
         {/* Watermark Switch */}
         <View style={styles.switchCard}>
           <View style={styles.switchLeft}>
-            <View style={[styles.iconBox, { backgroundColor: '#FFF0E5' }]}>
-              <Droplet color="#FF6B00" size={16} />
+            <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}>
+              <Droplet color="#2563EB" size={16} />
             </View>
             <View>
               <Text style={styles.switchTitle}>Show Watermark</Text>
               <Text style={styles.switchSub}>Apply your business branding to all photos</Text>
             </View>
           </View>
-          <Switch value={watermark} onValueChange={setWatermark} trackColor={{ false: '#E5E5EA', true: '#FF6B00' }} />
+          <Switch value={watermark} onValueChange={setWatermark} trackColor={{ false: '#E5E5EA', true: '#2563EB' }} />
         </View>
           </>
         )}
@@ -222,7 +225,7 @@ const styles = StyleSheet.create({
   backBtn: { marginRight: 12, padding: 4 },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#111' },
   headerSubtitle: { fontSize: 12, color: '#666', marginTop: 2 },
-  saveBtn: { backgroundColor: '#FF6B00', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+  saveBtn: { backgroundColor: '#2563EB', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
   saveBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
 
   content: { flex: 1, padding: 15 },
@@ -254,7 +257,7 @@ const styles = StyleSheet.create({
 
   cardsRow: { flexDirection: 'row', gap: 10, marginBottom: 25 },
   selectionCard: { flex: 1, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, padding: 15, position: 'relative' },
-  selectionCardActive: { borderColor: '#FF6B00', backgroundColor: '#FFF9F2' },
+  selectionCardActive: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
   scTitle: { fontSize: 14, fontWeight: '600', color: '#555', marginBottom: 4 },
   scSub: { fontSize: 11, color: '#888', lineHeight: 16 },
   scCheck: { position: 'absolute', top: 12, right: 12 },

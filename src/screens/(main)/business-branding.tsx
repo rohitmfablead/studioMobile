@@ -77,7 +77,7 @@ export default function BusinessBrandingScreen() {
           {/* Social Links */}
           <View style={styles.glassCard}>
             <View style={styles.cardHeader}>
-              <Share2 color="#F59E0B" size={20} />
+              <Share2 color="#2563EB" size={20} />
               <Text style={styles.cardTitle}>Social Links</Text>
             </View>
             

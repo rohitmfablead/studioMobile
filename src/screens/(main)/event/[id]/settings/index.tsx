@@ -1,17 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ImageBackground } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from '../../../../../utils/routerShim';
 import { ChevronLeft, ChevronRight, Settings as SettingsIcon, User, Lock, Folder, Download, BookOpen, Star, LogOut, Trash2 } from 'lucide-react-native';
 import { useSelector } from 'react-redux';
-import { useDeleteGroupMutation, useGetGroupDetailsQuery } from '../../../../../store/apiSlice';
 import { Platform, Alert, ActivityIndicator } from 'react-native';
 
 export default function SettingsScreen() {
+  const isDeleting = false;
+
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams();
   const userId = useSelector((state: any) => state.app.user?.id);
-  const { data: detailsData } = useGetGroupDetailsQuery(id as string);
+  const [detailsData , set_detailsData ] = useState<any>({});
   const isOwner = detailsData?.group?.owner?.id == userId || (detailsData?.group as any)?.user_id == userId;
 
   const MENU_ITEMS = [
@@ -26,11 +27,11 @@ export default function SettingsScreen() {
     { icon: <Star color="#666" size={22} />, label: 'Client Favorite', type: 'nav', onPress: () => router.push(`/(main)/event/${id}/settings/favorite`) },
   ];
 
-  const [deleteGroup, { isLoading: isDeleting }] = useDeleteGroupMutation();
+  const deleteGroup = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
 
   const executeDelete = async () => {
     try {
-      const res = await deleteGroup(id as string).unwrap();
+      const res = await deleteGroup(id as string);
       if (res.success) {
         router.replace('/(main)/dashboard');
       }
@@ -71,7 +72,7 @@ export default function SettingsScreen() {
             <View style={styles.headerTitleContainer}>
               <Text style={styles.headerTitleLarge}>Event Settings</Text>
               <View style={{flexDirection: 'row', alignItems: 'center', marginTop: 6}}>
-                <SettingsIcon color="#FF6B00" size={14} />
+                <SettingsIcon color="#2563EB" size={14} />
                 <Text style={styles.headerSubtitle}> Manage configurations, design, and access</Text>
               </View>
             </View>
@@ -101,8 +102,8 @@ export default function SettingsScreen() {
             {!isOwner ? (
               <TouchableOpacity style={[styles.menuItem, { borderBottomWidth: 0 }]}>
                 <View style={styles.menuLeft}>
-                  <LogOut color="#FF6B00" size={22} />
-                  <Text style={[styles.menuLabel, { color: '#FF6B00' }]}>Leave Group</Text>
+                  <LogOut color="#2563EB" size={22} />
+                  <Text style={[styles.menuLabel, { color: '#2563EB' }]}>Leave Group</Text>
                 </View>
                 <ChevronRight color="#C7C7CC" size={20} />
               </TouchableOpacity>

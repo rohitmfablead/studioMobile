@@ -70,13 +70,13 @@ export default function PortfolioSettingsScreen() {
             {services.map((item) => (
               <View key={item.id} style={[styles.serviceCard, item.active && styles.serviceCardActive]}>
                 <View style={styles.serviceHeader}>
-                  <View style={[styles.serviceIconBox, item.active && { backgroundColor: 'rgba(255, 107, 0, 0.15)' }]}>
-                    <item.icon color={item.active ? "#FF6B00" : "#71717A"} size={20} />
+                  <View style={[styles.serviceIconBox, item.active && { backgroundColor: 'rgba(37, 99, 235, 0.15)' }]}>
+                    <item.icon color={item.active ? "#2563EB" : "#71717A"} size={20} />
                   </View>
                   <Switch 
                     value={item.active} 
                     onValueChange={() => toggleService(item.id)}
-                    trackColor={{ true: '#FF6B00' }}
+                    trackColor={{ true: '#2563EB' }}
                     style={{ transform: [{ scale: 0.8 }] }}
                   />
                 </View>
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 20 },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#18181B', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#27272A' },
   headerTitle: { fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: 0.5 },
-  saveBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FF6B00', alignItems: 'center', justifyContent: 'center', shadowColor: '#FF6B00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8 },
+  saveBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center', shadowColor: '#2563EB', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8 },
   
   scrollContent: { padding: 20, paddingBottom: 40 },
   
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   servicesGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   
   serviceCard: { width: '48%', backgroundColor: '#18181B', borderRadius: 20, padding: 15, marginBottom: 15, borderWidth: 1, borderColor: '#27272A' },
-  serviceCardActive: { borderColor: '#FF6B00', backgroundColor: 'rgba(255, 107, 0, 0.05)' },
+  serviceCardActive: { borderColor: '#2563EB', backgroundColor: 'rgba(37, 99, 235, 0.05)' },
   
   serviceHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 },
   serviceIconBox: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#27272A', alignItems: 'center', justifyContent: 'center' },

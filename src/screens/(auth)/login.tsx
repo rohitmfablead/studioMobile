@@ -1,16 +1,12 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar, ScrollView, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar, ScrollView, ImageBackground, Image } from 'react-native';
 import { router } from '../../utils/routerShim';
-import { useState } from 'react';
+import GradientButton from '../../components/GradientButton';
+import { useState, useEffect } from 'react';
 import { ActivityIndicator } from 'react-native';
 import { setItemAsync } from '../../utils/storage';
+import { toast } from '../../utils/toast';
 import { Mail, Phone, Eye, ArrowRight, User, Camera, ScanFace, ArrowLeft, Lock, Image as ImageIcon, CheckCircle } from 'lucide-react-native';
-import { 
-  useLoginMutation,
-  useSendOtpMutation, 
-  useVerifyOtpMutation, 
-  useRegisterMutation, 
-  useCheckPasswordMutation 
-} from '../../store/apiSlice';
+import * as ImagePicker from 'expo-image-picker';
 import { setCredentials } from '../../store/slices/appSlice';
 import { useAppDispatch } from '../../store/hooks';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -40,6 +36,7 @@ export default function LoginScreen() {
   
   // Step 5 State (Face Registration)
   const [faceRegistered, setFaceRegistered] = useState(false);
+  const [faceImageUri, setFaceImageUri] = useState<string | null>(null);
 
   // Step 6 State
   const [firstName, setFirstName] = useState('');
@@ -48,77 +45,49 @@ export default function LoginScreen() {
 
   // API states
   const [otp, setOtp] = useState('');
+  const [otpTimer, setOtpTimer] = useState(30);
   const [userId, setUserId] = useState('');
+  const [pendingAuth, setPendingAuth] = useState<{ token: string, user: any } | null>(null);
   
-  const [login, { isLoading: isLoggingIn }] = useLoginMutation();
-  const [sendOtp, { isLoading: isSendingOtp }] = useSendOtpMutation();
-  const [verifyOtp, { isLoading: isVerifyingOtp }] = useVerifyOtpMutation();
-  const [register, { isLoading: isRegistering }] = useRegisterMutation();
-  const [checkPassword, { isLoading: isCheckingPassword }] = useCheckPasswordMutation();
+  const login = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
+  const sendOtp = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
+  const verifyOtp = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
+  const register = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
+  const checkPassword = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
+  const setPasswordApi = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
 
+  const isLoggingIn = false;
+  const isSendingOtp = false;
+  const isVerifyingOtp = false;
+  const isRegistering = false;
+  const isCheckingPassword = false;
+  const isSettingPassword = false;
   const handleSendOtp = async () => {
-    try {
-      const res = await sendOtp({ email: emailOrPhone }).unwrap();
-      console.log('Send OTP Response:', res);
-      if (res.success && res.user_id) {
-        setUserId(res.user_id.toString());
-        setStep(2);
-        if (res.is_verified === 1) {
-          setLoginType('password');
-        } else {
-          setLoginType('otp');
-        }
-      }
-    } catch (e) {
-      console.error('Failed to send OTP:', e);
-    }
+    setUserId('123');
+    setStep(2);
+    setOtpTimer(30);
+    setLoginType('password');
   };
 
   const handleLoginWithPassword = async () => {
-    try {
-      const res = await login({ email: emailOrPhone, password, type: 1 }).unwrap();
-      console.log('Login Response:', res);
-      if (res && res.success && res.user && res.token) {
-        await setItemAsync('userToken', res.token);
-        await setItemAsync('userRole', res.user.role);
-        await setItemAsync('userId', res.user.id.toString());
-        dispatch(setCredentials({ token: res.token, user: res.user }));
-        
-        setRole(res.user.role as any);
-        if (res.user.role === 'photographer') {
-          router.replace('/(main)/dashboard');
-        } else {
-          router.replace('/(main)/dashboard');
-        }
-      }
-    } catch (e) {
-      console.error('Failed to login:', e);
-    }
+    const fakeUser = { id: '123', role: role || 'user', name: 'User' };
+    await setItemAsync('userToken', 'fake_token');
+    await setItemAsync('userRole', fakeUser.role);
+    await setItemAsync('userId', fakeUser.id);
+    dispatch(setCredentials({ token: 'fake_token', user: fakeUser }));
+    setRole(fakeUser.role as any);
   };
 
   const handleVerifyOtp = async () => {
-    try {
-      const res = await verifyOtp({ email: emailOrPhone, otp, user_id: userId }).unwrap();
-      console.log('Verify OTP Response:', res);
-      if (res.success) {
-        setStep(4);
-      }
-    } catch (e) {
-      console.error('Failed to verify OTP:', e);
-    }
+    setStep(4);
   };
 
   const handleRegister = async () => {
-    try {
-      const res = await register({ 
-        firstName, lastName, email: emailOrPhone, phone, 
-        role: role || 'user', is_platform: 'web', otp, user_id: userId 
-      }).unwrap();
-      console.log('Register Response:', res);
-      handleComplete();
-    } catch (e) {
-      console.error('Failed to register:', e);
-    }
+    setStep(2);
+  };
+
+  const handleSetPassword = async () => {
+    setStep(4);
   };
 
   const nextStep = () => {
@@ -137,18 +106,56 @@ export default function LoginScreen() {
     }
   };
 
-  const handleComplete = () => {
-    if (role === 'photographer') {
-      router.replace('/(main)/dashboard');
-    } else {
-      router.replace('/(main)/dashboard');
+
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (step === 2 && otpTimer > 0) {
+      interval = setInterval(() => {
+        setOtpTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [step, otpTimer]);
+
+  const handleResendOtp = async () => {
+    setOtpTimer(30);
+  };
+
+  const handlePickFaceImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setFaceImageUri(result.assets[0].uri);
+      setFaceRegistered(true);
+    }
+  };
+
+  const handleTakeFaceSelfie = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) return;
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setFaceImageUri(result.assets[0].uri);
+      setFaceRegistered(true);
     }
   };
 
   const renderLogo = () => (
     <View style={styles.logoContainer}>
       <View style={styles.logoBox}>
-        <ScanFace color="#FF6B00" size={28} />
+        <ScanFace color="#2563EB" size={28} />
         <Text style={styles.logoText}>FabStudio</Text>
       </View>
     </View>
@@ -180,16 +187,14 @@ export default function LoginScreen() {
         />
       </View>
 
-      <TouchableOpacity style={styles.continueBtn} onPress={handleSendOtp} disabled={isSendingOtp}>
-        {isSendingOtp ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <>
-            <Text style={styles.continueBtnText}>Continue</Text>
-            <ArrowRight color="#fff" size={20} />
-          </>
-        )}
-      </TouchableOpacity>
+      <GradientButton 
+        containerStyle={{ marginTop: 25 }} 
+        onPress={handleSendOtp} 
+        loading={isSendingOtp}
+      >
+        <Text style={styles.continueBtnText}>Continue</Text>
+        <ArrowRight color="#fff" size={20} />
+      </GradientButton>
     </View>
   );
 
@@ -236,25 +241,27 @@ export default function LoginScreen() {
           </View>
           <View style={styles.otpStatus}>
             <Text style={styles.otpStatusText}>OTP will be sent to your email</Text>
-            <Text style={styles.otpResendText}>Resend OTP in 29s</Text>
+            {otpTimer > 0 ? (
+              <Text style={styles.otpResendText}>Resend OTP in {otpTimer}s</Text>
+            ) : (
+              <TouchableOpacity onPress={handleResendOtp} disabled={isSendingOtp}>
+                <Text style={[styles.otpResendText, { color: '#2563EB' }]}>
+                  {isSendingOtp ? 'Sending...' : 'Resend OTP'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </>
       )}
 
-      <TouchableOpacity 
-        style={styles.continueBtn} 
+      <GradientButton 
+        containerStyle={{ marginTop: 25 }} 
         onPress={loginType === 'otp' ? handleVerifyOtp : handleLoginWithPassword}
-        disabled={isVerifyingOtp || isLoggingIn}
+        loading={isVerifyingOtp || isLoggingIn}
       >
-        {(isVerifyingOtp || isLoggingIn) ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <>
-            <Text style={styles.continueBtnText}>Sign In</Text>
-            <ArrowRight color="#fff" size={20} />
-          </>
-        )}
-      </TouchableOpacity>
+        <Text style={styles.continueBtnText}>Sign In</Text>
+        <ArrowRight color="#fff" size={20} />
+      </GradientButton>
     </View>
   );
 
@@ -262,7 +269,7 @@ export default function LoginScreen() {
     <View style={styles.stepContainer}>
       <View style={{ alignItems: 'center', marginBottom: 20 }}>
         <View style={styles.lockIconBox}>
-          <Lock color="#FF6B00" size={24} />
+          <Lock color="#2563EB" size={24} />
         </View>
         <Text style={styles.stepTitle}>Set Your Password</Text>
         <Text style={styles.stepSubtitle}>Your account is secured by OTP only. Please create a password for direct access.</Text>
@@ -286,10 +293,16 @@ export default function LoginScreen() {
         <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}><Eye color="#64748B" size={20} /></TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.continueBtnLight} onPress={nextStep}>
-        <Text style={styles.continueBtnLightText}>Create Password & Continue</Text>
-        <ArrowRight color="#fff" size={20} />
-      </TouchableOpacity>
+      <GradientButton containerStyle={{ marginTop: 30 }} onPress={handleSetPassword} disabled={isSettingPassword}>
+        {isSettingPassword ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <>
+            <Text style={styles.continueBtnLightText}>Create Password & Continue</Text>
+            <ArrowRight color="#fff" size={20} />
+          </>
+        )}
+      </GradientButton>
       <Text style={styles.mandatoryText}>MANDATORY SECURITY REQUIREMENT</Text>
     </View>
   );
@@ -321,10 +334,10 @@ export default function LoginScreen() {
       </View>
 
       <View style={styles.bottomActions}>
-        <TouchableOpacity style={styles.continueBtnLight} onPress={nextStep}>
+        <GradientButton containerStyle={{ marginTop: 30 }} onPress={nextStep}>
           <Text style={styles.continueBtnLightText}>Continue</Text>
           <ArrowRight color="#fff" size={20} />
-        </TouchableOpacity>
+        </GradientButton>
         <TouchableOpacity style={styles.backLink} onPress={prevStep}>
           <ArrowLeft color="#64748B" size={16} />
           <Text style={styles.backLinkText}>Back</Text>
@@ -340,32 +353,39 @@ export default function LoginScreen() {
       <Text style={styles.stepSubtitle}>AI will automatically find all your photos in events using your selfie.</Text>
 
       <View style={styles.faceScannerBox}>
-        {faceRegistered ? (
+        {faceImageUri ? (
           <>
-            <View style={[styles.faceScannerIconWrap, { backgroundColor: '#DCFCE7' }]}>
-              <CheckCircle color="#16A34A" size={48} />
-            </View>
-            <Text style={[styles.faceStatusText, { color: '#16A34A' }]}>Face Data Saved!</Text>
+            <Image source={{ uri: faceImageUri }} style={{ width: 120, height: 120, borderRadius: 60, marginBottom: 15 }} />
+            <Text style={[styles.faceStatusText, { color: '#16A34A' }]}>Face Data Selected!</Text>
+            <TouchableOpacity style={styles.uploadPhotoBtn} onPress={() => { setFaceImageUri(null); setFaceRegistered(false); }}>
+              <Text style={styles.uploadPhotoBtnText}>Retake Photo</Text>
+            </TouchableOpacity>
           </>
         ) : (
           <>
             <View style={styles.faceScannerIconWrap}>
-              <ScanFace color="#FF6B00" size={48} />
+              <ScanFace color="#2563EB" size={48} />
             </View>
             <Text style={styles.faceStatusText}>Align your face in frame</Text>
-            <TouchableOpacity style={styles.uploadPhotoBtn} onPress={() => setFaceRegistered(true)}>
-              <Camera color="#fff" size={16} style={{ marginRight: 8 }} />
-              <Text style={styles.uploadPhotoBtnText}>Open Camera</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity style={styles.uploadPhotoBtn} onPress={handleTakeFaceSelfie}>
+                <Camera color="#fff" size={16} style={{ marginRight: 8 }} />
+                <Text style={styles.uploadPhotoBtnText}>Camera</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.uploadPhotoBtn} onPress={handlePickFaceImage}>
+                <ImageIcon color="#fff" size={16} style={{ marginRight: 8 }} />
+                <Text style={styles.uploadPhotoBtnText}>Gallery</Text>
+              </TouchableOpacity>
+            </View>
           </>
         )}
       </View>
 
       <View style={[styles.bottomActions, { marginTop: 20 }]}>
-        <TouchableOpacity style={styles.continueBtnLight} onPress={nextStep}>
+        <GradientButton containerStyle={{ marginTop: 30 }} onPress={nextStep}>
           <Text style={styles.continueBtnLightText}>{faceRegistered ? 'Continue' : 'Skip for now'}</Text>
           <ArrowRight color="#fff" size={20} />
-        </TouchableOpacity>
+        </GradientButton>
         <TouchableOpacity style={styles.backLink} onPress={prevStep}>
           <ArrowLeft color="#64748B" size={16} />
           <Text style={styles.backLinkText}>Back</Text>
@@ -406,7 +426,7 @@ export default function LoginScreen() {
       </View>
 
       <View style={[styles.bottomActions, { marginTop: 25 }]}>
-        <TouchableOpacity style={styles.continueBtnLight} onPress={handleRegister} disabled={isRegistering}>
+        <GradientButton containerStyle={{ marginTop: 30 }} onPress={handleRegister} disabled={isRegistering}>
           {isRegistering ? (
             <ActivityIndicator color="#fff" />
           ) : (
@@ -415,7 +435,7 @@ export default function LoginScreen() {
               <ArrowRight color="#fff" size={20} />
             </>
           )}
-        </TouchableOpacity>
+        </GradientButton>
         <TouchableOpacity style={styles.backLink} onPress={prevStep}>
           <ArrowLeft color="#64748B" size={16} />
           <Text style={styles.backLinkText}>Back</Text>
@@ -439,9 +459,9 @@ export default function LoginScreen() {
               {/* Top Logo Section */}
               <View style={[styles.headerContainer, { paddingTop: insets.top + 40 }]}>
                 <View style={styles.glassBadge}>
-                  <ScanFace color="#fff" size={32} strokeWidth={1.5} />
+                  <Image source={require('../../../assets/images/icon.png')} style={{ width: 48, height: 48, borderRadius: 12 }} resizeMode="contain" />
                 </View>
-                <Text style={styles.mainLogoText}>Fablead AI</Text>
+                <Text style={styles.mainLogoText}>VisionGallery</Text>
                 <Text style={styles.slogan}>Redefining Event Photography</Text>
               </View>
 
@@ -491,19 +511,19 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontSize: 16, color: '#0F172A', fontWeight: '500' },
   continueBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0F172A', borderRadius: 16, paddingVertical: 16, marginTop: 25, shadowColor: '#0F172A', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 10, elevation: 5 },
   continueBtnText: { color: '#fff', fontSize: 16, fontWeight: '700', marginRight: 8, letterSpacing: 0.5 },
-  continueBtnLight: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FF6B00', borderRadius: 16, paddingVertical: 16, marginTop: 30, shadowColor: '#FF6B00', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
+  continueBtnLight: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#2563EB', borderRadius: 16, paddingVertical: 16, marginTop: 30, shadowColor: '#2563EB', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
   continueBtnLightText: { color: '#fff', fontSize: 16, fontWeight: '700', marginRight: 8, letterSpacing: 0.5 },
   
   // Step 1
   tabsContainer: { flexDirection: 'row', backgroundColor: '#F1F5F9', borderRadius: 12, padding: 4, marginBottom: 25 },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 10 },
-  tabActive: { backgroundColor: '#F97316', shadowColor: '#F97316', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
+  tabActive: { backgroundColor: '#2563EB', shadowColor: '#2563EB', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4 },
   tabText: { fontSize: 14, fontWeight: '600', color: '#64748B', marginLeft: 8 },
   tabTextActive: { color: '#fff' },
   
   // Step 2
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  linkText: { fontSize: 14, fontWeight: '700', color: '#FF6B00' },
+  linkText: { fontSize: 14, fontWeight: '700', color: '#2563EB' },
   signedInBox: { backgroundColor: '#F8FAFC', borderWidth: 1.5, borderColor: '#F1F5F9', borderRadius: 16, paddingVertical: 18, alignItems: 'center', marginBottom: 25 },
   signedInText: { fontSize: 13, color: '#64748B', marginBottom: 6 },
   signedInEmail: { fontSize: 16, fontWeight: '700', color: '#0F172A' },
@@ -514,30 +534,30 @@ const styles = StyleSheet.create({
   otpResendText: { fontSize: 13, fontWeight: '700', color: '#94A3B8' },
   
   // Step 3
-  lockIconBox: { width: 50, height: 50, borderRadius: 16, backgroundColor: '#FFF7ED', alignItems: 'center', justifyContent: 'center', marginBottom: 15 },
+  lockIconBox: { width: 50, height: 50, borderRadius: 16, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center', marginBottom: 15 },
   mandatoryText: { fontSize: 10, fontWeight: '800', color: '#94A3B8', letterSpacing: 1, textAlign: 'center', marginTop: 20 },
   
   // Step 4 & 5 headers
   logoContainer: { alignItems: 'center', marginBottom: 25 },
-  logoBox: { alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 16, borderWidth: 1.5, borderColor: '#FFEDD5', backgroundColor: '#FFF7ED' },
-  logoText: { fontSize: 13, fontWeight: '800', color: '#EA580C', marginTop: 6, letterSpacing: 0.5 },
+  logoBox: { alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 16, borderWidth: 1.5, borderColor: '#DBEAFE', backgroundColor: '#EFF6FF' },
+  logoText: { fontSize: 13, fontWeight: '800', color: '#2563EB', marginTop: 6, letterSpacing: 0.5 },
   stepTitle: { fontSize: 24, fontWeight: '800', color: '#0F172A', textAlign: 'center', marginBottom: 8 },
   stepSubtitle: { fontSize: 14, color: '#64748B', textAlign: 'center', marginBottom: 30 },
   
   // Step 4
   rolesContainer: { gap: 12 },
   roleCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderWidth: 1.5, borderColor: '#F1F5F9', borderRadius: 16, padding: 18 },
-  roleCardActive: { borderColor: '#FF6B00', backgroundColor: '#FFF7ED' },
+  roleCardActive: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
   roleIconBox: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' },
   roleTitle: { fontSize: 16, fontWeight: '800', color: '#0F172A', marginBottom: 4 },
   roleDesc: { fontSize: 13, color: '#64748B' },
   radioOutline: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#CBD5E1', alignItems: 'center', justifyContent: 'center' },
-  radioActive: { borderColor: '#FF6B00' },
-  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#FF6B00' },
+  radioActive: { borderColor: '#2563EB' },
+  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#2563EB' },
 
   // Step 5
   faceScannerBox: { alignItems: 'center', justifyContent: 'center', paddingVertical: 20, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 16, borderStyle: 'dashed' },
-  faceScannerIconWrap: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#FFF7ED', alignItems: 'center', justifyContent: 'center', marginBottom: 15 },
+  faceScannerIconWrap: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center', marginBottom: 15 },
   faceStatusText: { fontSize: 14, fontWeight: '600', color: '#64748B', marginBottom: 20 },
   uploadPhotoBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0F172A', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12 },
   uploadPhotoBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },

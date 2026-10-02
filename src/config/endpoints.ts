@@ -5,6 +5,7 @@ export const API_ENDPOINTS = {
     VERIFY_OTP: 'auth/verify-otp',
     REGISTER: 'auth/register',
     CHECK_PASSWORD: 'auth/check-password',
+    SET_PASSWORD: 'auth/set-password',
   },
   PLANS: {
     USER_DETAILS: 'plans/user-details',
@@ -12,6 +13,7 @@ export const API_ENDPOINTS = {
   },
   FACE: {
     STATUS: 'face/status',
+    REGISTER: 'face/register',
   },
   GROUPS: {
     LIST: 'groups',

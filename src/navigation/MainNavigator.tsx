@@ -49,7 +49,7 @@ function MainTabs() {
   return (
     <Tab.Navigator
       tabBar={(props) => <CustomTabBar {...props} />}
-      screenOptions={{ headerShown: false, tabBarActiveTintColor: '#FF9500' }}
+      screenOptions={{ headerShown: false, tabBarActiveTintColor: '#2563EB' }}
     >
       <Tab.Screen name="Dashboard" component={Dashboard} options={{ title: 'Dashboard', tabBarIcon: ({ color }) => <LayoutDashboard color={color} size={24} /> }} />
       <Tab.Screen name="MyPhotos" component={MyPhotos} options={{ title: 'My Photo', tabBarIcon: ({ color }) => <ImageIcon color={color} size={24} /> }} />

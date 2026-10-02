@@ -1,0 +1,142 @@
+src/components/animated-icon.web.tsx(5,21): error TS2307: Cannot find module './animated-icon.module.css' or its corresponding type declarations.
+src/components/app-tabs.tsx(1,28): error TS2307: Cannot find module 'expo-router/unstable-native-tabs' or its corresponding type declarations.
+src/components/app-tabs.web.tsx(8,8): error TS2307: Cannot find module 'expo-router/ui' or its corresponding type declarations.
+src/components/external-link.tsx(1,28): error TS2307: Cannot find module 'expo-router' or its corresponding type declarations.
+src/components/external-link.tsx(13,23): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/constants/theme.ts(6,8): error TS2882: Cannot find module or type declarations for side-effect import of '@/global.css'.
+src/screens/(auth)/login.tsx(112,26): error TS2694: Namespace 'global.NodeJS' has no exported member 'Timeout'.
+src/screens/(main)/billing.tsx(97,146): error TS2345: Argument of type '{ container: { flex: number; backgroundColor: string; }; header: { flexDirection: "row"; justifyContent: "space-between"; alignItems: "center"; paddingHorizontal: number; paddingBottom: number; }; ... 27 more ...; txStatusFailed: { ...; }; }' is not assignable to parameter of type '{ container: { flex: number; backgroundColor: string; }; header: { flexDirection: "row"; justifyContent: "space-between"; alignItems: "center"; paddingHorizontal: number; paddingBottom: number; }; ... 27 more ...; txStatusFailed: { ...; }; } & NamedStyles<...>'.
+  Property 'planGlow' is incompatible with index signature.
+    Object literal may only specify known properties, and 'blurRadius' does not exist in type 'ViewStyle | TextStyle | ImageStyle'.
+src/screens/(main)/business-profile.tsx(72,10): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/business-profile.tsx(74,7): error TS2552: Cannot find name 'refetch'. Did you mean 'fetch'?
+src/screens/(main)/business-profile.tsx(98,9): error TS2552: Cannot find name 'refetch'. Did you mean 'fetch'?
+src/screens/(main)/business-profile.tsx(129,9): error TS2552: Cannot find name 'refetch'. Did you mean 'fetch'?
+src/screens/(main)/business-profile.tsx(193,12): error TS2304: Cannot find name 'isLoading'.
+src/screens/(main)/business-profile.tsx(208,20): error TS2304: Cannot find name 'isUploadingAvatar'.
+src/screens/(main)/dashboard.tsx(163,24): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/screens/(main)/dashboard.tsx(274,205): error TS2345: Argument of type '{ container: { flex: number; backgroundColor: string; }; headerBackground: { width: "100%"; height: number; }; headerOverlay: { flex: number; backgroundColor: string; paddingHorizontal: number; }; ... 47 more ...; confirmBtnText: { ...; }; }' is not assignable to parameter of type '{ container: { flex: number; backgroundColor: string; }; headerBackground: { width: "100%"; height: number; }; headerOverlay: { flex: number; backgroundColor: string; paddingHorizontal: number; }; ... 47 more ...; confirmBtnText: { ...; }; } & NamedStyles<...>'.
+  Property 'bellBtnWhite' is incompatible with index signature.
+    Object literal may only specify known properties, and 'backdropFilter' does not exist in type 'ViewStyle | TextStyle | ImageStyle'.
+src/screens/(main)/event/[id].tsx(115,27): error TS7006: Parameter 'reason' implicitly has an 'any' type.
+src/screens/(main)/event/[id].tsx(121,99): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(139,30): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(140,34): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(159,32): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(160,36): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(187,76): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(210,32): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(211,36): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(216,30): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(217,34): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(238,37): error TS2339: Property 'documentDirectory' does not exist on type 'typeof import("/Users/imac/Desktop/Projects/PhotoShareMobile/node_modules/expo-file-system/build/index")'.
+src/screens/(main)/event/[id].tsx(249,10): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(263,12): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(284,62): error TS2304: Cannot find name 'isMatching'.
+src/screens/(main)/event/[id].tsx(286,35): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(286,49): error TS7006: Parameter 'res' implicitly has an 'any' type.
+src/screens/(main)/event/[id].tsx(291,16): error TS7006: Parameter 'e' implicitly has an 'any' type.
+src/screens/(main)/event/[id].tsx(371,40): error TS2304: Cannot find name 'refetchVideos'.
+src/screens/(main)/event/[id].tsx(377,47): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(378,47): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(385,38): error TS2304: Cannot find name 'refetchVideos'.
+src/screens/(main)/event/[id].tsx(408,9): error TS2304: Cannot find name 'refetchVideos'.
+src/screens/(main)/event/[id].tsx(424,34): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/screens/(main)/event/[id].tsx(427,63): error TS2304: Cannot find name 'Photo'.
+src/screens/(main)/event/[id].tsx(442,45): error TS7006: Parameter 'p' implicitly has an 'any' type.
+src/screens/(main)/event/[id].tsx(656,20): error TS2304: Cannot find name 'foldersError'.
+src/screens/(main)/event/[id].tsx(745,73): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id].tsx(754,33): error TS2304: Cannot find name 'isMatching'.
+src/screens/(main)/event/[id].tsx(757,24): error TS2304: Cannot find name 'isMatching'.
+src/screens/(main)/event/[id].tsx(800,39): error TS2304: Cannot find name 'isLoadingParticipants'.
+src/screens/(main)/event/[id].tsx(979,51): error TS2339: Property 'qrGetBtn' does not exist on type '{ container: { flex: number; backgroundColor: string; }; cover: { width: "100%"; height: number; justifyContent: "space-between"; }; overlay: any; headerTop: { flexDirection: "row"; paddingHorizontal: number; marginTop: number; }; ... 140 more ...; sheetUploadProgressBarFill: { ...; }; }'.
+src/screens/(main)/event/[id].tsx(1162,74): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type '{ width: `${number}%` | "null%"; }' is not assignable to type 'ViewStyle | Falsy | RecursiveArray<ViewStyle | Falsy> | readonly (ViewStyle | Falsy)[]'.
+      Types of property 'width' are incompatible.
+        Type '`${number}%` | "null%"' is not assignable to type 'DimensionValue | undefined'.
+          Type '"null%"' is not assignable to type 'DimensionValue | undefined'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type '{ width: `${number}%` | "null%"; }' is not assignable to type 'ViewStyle | Falsy | RecursiveArray<ViewStyle | Falsy> | readonly (ViewStyle | Falsy)[]'.
+      Types of property 'width' are incompatible.
+        Type '`${number}%` | "null%"' is not assignable to type 'DimensionValue | undefined'.
+          Type '"null%"' is not assignable to type 'DimensionValue | undefined'.
+src/screens/(main)/event/[id].tsx(1207,28): error TS2551: Property 'absoluteFillObject' does not exist on type 'typeof StyleSheet'. Did you mean 'absoluteFill'?
+src/screens/(main)/event/[id]/chat/index.tsx(44,8): error TS2304: Cannot find name 'isLoading'.
+src/screens/(main)/event/[id]/settings/download-history.tsx(102,12): error TS2304: Cannot find name 'isLoading'.
+src/screens/(main)/event/[id]/settings/folders.tsx(33,141): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id]/settings/folders.tsx(36,11): error TS2304: Cannot find name 'refetch'.
+src/screens/(main)/event/[id]/settings/folders.tsx(39,120): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id]/settings/folders.tsx(42,11): error TS2304: Cannot find name 'refetch'.
+src/screens/(main)/event/[id]/settings/folders.tsx(77,100): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id]/settings/folders.tsx(78,38): error TS2304: Cannot find name 'refetch'.
+src/screens/(main)/event/[id]/settings/folders.tsx(91,20): error TS2304: Cannot find name 'isCreating'.
+src/screens/(main)/event/[id]/settings/folders.tsx(91,34): error TS2304: Cannot find name 'isUpdating'.
+src/screens/(main)/event/[id]/settings/folders.tsx(124,10): error TS2304: Cannot find name 'isLoading'.
+src/screens/(main)/event/[id]/settings/general.tsx(54,81): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id]/settings/general.tsx(58,9): error TS2304: Cannot find name 'refetch'.
+src/screens/(main)/event/[id]/settings/general.tsx(80,51): error TS2304: Cannot find name 'isUpdating'.
+src/screens/(main)/event/[id]/settings/general.tsx(80,115): error TS2304: Cannot find name 'isUpdating'.
+src/screens/(main)/event/[id]/settings/general.tsx(81,12): error TS2304: Cannot find name 'isUpdating'.
+src/screens/(main)/event/[id]/settings/general.tsx(90,10): error TS2304: Cannot find name 'isLoading'.
+src/screens/(main)/event/[id]/settings/index.tsx(32,51): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id]/settings/index.tsx(70,33): error TS2339: Property 'headerTitleContainer' does not exist on type '{ container: { flex: number; backgroundColor: string; }; headerBanner: { width: "100%"; backgroundColor: string; minHeight: number; justifyContent: "flex-end"; }; headerBannerOverlay: { paddingHorizontal: number; paddingBottom: number; }; ... 10 more ...; menuLabel: { ...; }; }'.
+src/screens/(main)/event/[id]/settings/index.tsx(109,118): error TS2304: Cannot find name 'isDeleting'.
+src/screens/(main)/event/[id]/settings/index.tsx(111,20): error TS2304: Cannot find name 'isDeleting'.
+src/screens/(main)/event/[id]/settings/index.tsx(112,75): error TS2304: Cannot find name 'isDeleting'.
+src/screens/(main)/event/[id]/settings/participants.tsx(82,12): error TS2304: Cannot find name 'isLoading'.
+src/screens/(main)/event/[id]/settings/privacy.tsx(44,81): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id]/settings/privacy.tsx(48,9): error TS2304: Cannot find name 'refetch'.
+src/screens/(main)/event/[id]/settings/privacy.tsx(70,51): error TS2304: Cannot find name 'isUpdating'.
+src/screens/(main)/event/[id]/settings/privacy.tsx(70,115): error TS2304: Cannot find name 'isUpdating'.
+src/screens/(main)/event/[id]/settings/privacy.tsx(71,12): error TS2304: Cannot find name 'isUpdating'.
+src/screens/(main)/event/[id]/settings/privacy.tsx(80,10): error TS2304: Cannot find name 'isLoading'.
+src/screens/(main)/event/[id]/settings/view-download.tsx(45,81): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/event/[id]/settings/view-download.tsx(49,9): error TS2304: Cannot find name 'refetch'.
+src/screens/(main)/event/[id]/settings/view-download.tsx(74,10): error TS2304: Cannot find name 'isLoading'.
+src/screens/(main)/event/[id]/settings/view-download.tsx(168,51): error TS2304: Cannot find name 'isUpdating'.
+src/screens/(main)/event/[id]/settings/view-download.tsx(168,115): error TS2304: Cannot find name 'isUpdating'.
+src/screens/(main)/event/[id]/settings/view-download.tsx(169,12): error TS2304: Cannot find name 'isUpdating'.
+src/screens/(main)/flipbook.tsx(50,46): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/flipbook.tsx(73,81): error TS2304: Cannot find name 'isSaving'.
+src/screens/(main)/flipbook.tsx(74,12): error TS2304: Cannot find name 'isSaving'.
+src/screens/(main)/flipbook.tsx(79,10): error TS2304: Cannot find name 'isLoading'.
+src/screens/(main)/flipbook.tsx(84,11): error TS2304: Cannot find name 'isLoading'.
+src/screens/(main)/my-photos.tsx(57,27): error TS7006: Parameter 'group' implicitly has an 'any' type.
+src/screens/(main)/plans.tsx(9,27): error TS2304: Cannot find name 'useState'.
+src/screens/(main)/plans.tsx(73,12): error TS2304: Cannot find name 'isLoading'.
+src/screens/(main)/plans.tsx(79,13): error TS2304: Cannot find name 'isLoading'.
+src/screens/(main)/storage.tsx(11,38): error TS2304: Cannot find name 'useState'.
+src/screens/(main)/storage.tsx(55,7): error TS2304: Cannot find name 'isLoading'.
+src/screens/(main)/team.tsx(83,134): error TS2345: Argument of type '{ container: { flex: number; backgroundColor: string; }; header: { flexDirection: "row"; justifyContent: "space-between"; alignItems: "center"; paddingHorizontal: number; paddingBottom: number; }; ... 19 more ...; roleText: { ...; }; }' is not assignable to parameter of type '{ container: { flex: number; backgroundColor: string; }; header: { flexDirection: "row"; justifyContent: "space-between"; alignItems: "center"; paddingHorizontal: number; paddingBottom: number; }; ... 19 more ...; roleText: { ...; }; } & NamedStyles<...>'.
+  Property 'heroGlow' is incompatible with index signature.
+    Object literal may only specify known properties, and 'blurRadius' does not exist in type 'ViewStyle | TextStyle | ImageStyle'.
+src/screens/(main)/watermark.tsx(31,19): error TS2345: Argument of type 'string' is not assignable to parameter of type 'SetStateAction<null>'.
+src/screens/(main)/watermark.tsx(47,27): error TS7053: Element implicitly has an 'any' type because expression of type 'number' can't be used to index type '{ 0: string; 1: string; 2: string; 3: string; 4: string; 5: string; 6: string; 7: string; 8: string; }'.
+  No index signature with a parameter of type 'number' was found on type '{ 0: string; 1: string; 2: string; 3: string; 4: string; 5: string; 6: string; 7: string; 8: string; }'.
+src/screens/(main)/watermark.tsx(70,45): error TS2339: Property 'unwrap' does not exist on type 'Promise<{ data: {}; }>'.
+src/screens/(main)/watermark.tsx(91,20): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ 'top-left': number; 'top-center': number; 'top-right': number; 'middle-left': number; center: number; 'middle-right': number; 'bottom-left': number; 'bottom-center': number; 'bottom-right': number; }'.
+src/screens/create-event.tsx(81,15): error TS2339: Property 'success' does not exist on type '{ data: {}; }'.
+src/screens/create-event.tsx(81,30): error TS2339: Property 'group' does not exist on type '{ data: {}; }'.
+src/screens/join-event.tsx(22,7): error TS2531: Object is possibly 'null'.
+src/screens/join-event.tsx(28,7): error TS2531: Object is possibly 'null'.
+src/screens/join-event.tsx(63,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): SafeAreaView', gave the following error.
+    Type '{ children: Element; edges: string[]; style: { zIndex: number; }; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<SafeAreaView> & Readonly<ViewProps>'.
+      Property 'edges' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<SafeAreaView> & Readonly<ViewProps>'.
+  Overload 2 of 2, '(props: ViewProps, context: any): SafeAreaView', gave the following error.
+    Type '{ children: Element; edges: string[]; style: { zIndex: number; }; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<SafeAreaView> & Readonly<ViewProps>'.
+      Property 'edges' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<SafeAreaView> & Readonly<ViewProps>'.
+src/screens/join-event.tsx(88,19): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextInputProps): TextInput', gave the following error.
+    Type '(ref: TextInput | null) => TextInput | null' is not assignable to type 'Ref<TextInput> | undefined'.
+      Type '(ref: TextInput | null) => TextInput | null' is not assignable to type '(instance: TextInput | null) => void | (() => VoidOrUndefinedOnly)'.
+        Type 'TextInput | null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+          Type 'null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+  Overload 2 of 2, '(props: TextInputProps, context: any): TextInput', gave the following error.
+    Type '(ref: TextInput | null) => TextInput | null' is not assignable to type 'Ref<TextInput> | undefined'.
+      Type '(ref: TextInput | null) => TextInput | null' is not assignable to type '(instance: TextInput | null) => void | (() => VoidOrUndefinedOnly)'.
+        Type 'TextInput | null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+          Type 'null' is not assignable to type 'void | (() => VoidOrUndefinedOnly)'.
+src/store/apiSlice.ts(621,15): error TS7034: Variable 'results' implicitly has type 'any[]' in some locations where its type cannot be determined.
+src/store/apiSlice.ts(761,139): error TS7005: Variable 'results' implicitly has an 'any[]' type.

@@ -27,7 +27,7 @@ const distributionData = [
   { name: 'Cover photos', value: 39, percent: 100, color: '#3B82F6' }, // Blue
   { name: 'Corporate', value: 0, percent: 0, color: '#10B981' }, // Green
   { name: 'Birthday', value: 0, percent: 0, color: '#A855F7' }, // Purple
-  { name: 'Website', value: 0, percent: 0, color: '#F97316' }, // Orange
+  { name: 'Website', value: 0, percent: 0, color: '#2563EB' }, // Orange
 ];
 
 const groupStatsData = [
@@ -102,7 +102,7 @@ export default function AnalyticsScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleRow}>
-              <Activity color="#F97316" size={18} />
+              <Activity color="#2563EB" size={18} />
               <Text style={styles.cardTitle}>Upload Trend</Text>
             </View>
             <View style={styles.dropdown}>
@@ -114,12 +114,12 @@ export default function AnalyticsScreen() {
           
           <View style={styles.trendSummaryRow}>
             <View style={styles.trendSummaryCol}>
-              <Text style={[styles.trendSummaryValue, { color: '#F97316' }]}>39</Text>
+              <Text style={[styles.trendSummaryValue, { color: '#2563EB' }]}>39</Text>
               <Text style={styles.trendSummaryLabel}>Total Uploads</Text>
             </View>
             <View style={styles.trendSummaryDivider} />
             <View style={styles.trendSummaryCol}>
-              <Text style={[styles.trendSummaryValue, { color: '#F97316' }]}>3.3</Text>
+              <Text style={[styles.trendSummaryValue, { color: '#2563EB' }]}>3.3</Text>
               <Text style={styles.trendSummaryLabel}>Average per month</Text>
             </View>
             <View style={styles.trendSummaryDivider} />
@@ -151,7 +151,7 @@ export default function AnalyticsScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleRow}>
-              <BarChart3 color="#F97316" size={18} />
+              <BarChart3 color="#2563EB" size={18} />
               <Text style={styles.cardTitle}>Upload Distribution</Text>
             </View>
           </View>
@@ -181,7 +181,7 @@ export default function AnalyticsScreen() {
         <View style={[styles.card, { paddingRight: 0 }]}>
           <View style={[styles.cardHeader, { paddingRight: 20 }]}>
             <View style={styles.cardTitleRow}>
-              <List color="#F97316" size={18} />
+              <List color="#2563EB" size={18} />
               <Text style={styles.cardTitle}>Group-wise Stats</Text>
             </View>
           </View>
@@ -263,8 +263,8 @@ const styles = StyleSheet.create({
   chartScroll: { paddingBottom: 10 },
   chartContainer: { flexDirection: 'row', alignItems: 'flex-end', height: 180, paddingTop: 10 },
   barCol: { alignItems: 'center', width: 40, marginRight: 8 },
-  barWrapper: { height: 140, width: 28, justifyContent: 'flex-end', backgroundColor: '#FFF7ED', borderRadius: 6, overflow: 'hidden' },
-  barFill: { width: '100%', backgroundColor: '#F97316', borderTopLeftRadius: 6, borderTopRightRadius: 6 },
+  barWrapper: { height: 140, width: 28, justifyContent: 'flex-end', backgroundColor: '#EFF6FF', borderRadius: 6, overflow: 'hidden' },
+  barFill: { width: '100%', backgroundColor: '#2563EB', borderTopLeftRadius: 6, borderTopRightRadius: 6 },
   barLabel: { fontSize: 11, color: '#6B7280', marginTop: 10, fontWeight: '500' },
 
   // Upload Distribution

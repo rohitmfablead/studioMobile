@@ -3,12 +3,15 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, ActivityI
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from '../../../../../utils/routerShim';
 import { ChevronLeft, Download, Share2, Smartphone, MonitorSmartphone, Monitor, LayoutGrid, CheckCircle2 } from 'lucide-react-native';
-import { useGetGroupDetailsQuery, useUpdateGroupViewDownloadSettingsMutation } from '../../../../../store/apiSlice';
 
 export default function ViewDownloadSettings() {
+  const refetch = () => {};
+  const isLoading = false;
+  const isUpdating = false;
+
   const { id } = useLocalSearchParams();
-  const { data, isLoading, refetch } = useGetGroupDetailsQuery(id as string);
-  const [updateViewDownload, { isLoading: isUpdating }] = useUpdateGroupViewDownloadSettingsMutation();
+  const [data, setData] = useState<any>({});
+  const updateViewDownload = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
 
   const [allowDownload, setAllowDownload] = useState(true);
   const [enableShare, setEnableShare] = useState(true);
@@ -43,7 +46,7 @@ export default function ViewDownloadSettings() {
         viewingPlatform: viewingPlatform.toLowerCase()
       };
       
-      const res = await updateViewDownload({ id: id as string, body: payload }).unwrap();
+      const res = await updateViewDownload({ id: id as string, body: payload });
       if (res.success) {
         setToastMsg('Settings updated successfully!');
         setTimeout(() => setToastMsg(''), 3000);
@@ -74,13 +77,13 @@ export default function ViewDownloadSettings() {
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 100 }}>
         {isLoading ? (
           <View style={{ padding: 20, alignItems: 'center' }}>
-            <ActivityIndicator size="large" color="#FF6B00" />
+            <ActivityIndicator size="large" color="#2563EB" />
           </View>
         ) : (
           <>
         {/* Download Settings */}
         <Text style={styles.sectionTitle}>
-          <Download color="#FF6B00" size={14} style={{marginRight: 6}} /> Download Settings
+          <Download color="#2563EB" size={14} style={{marginRight: 6}} /> Download Settings
         </Text>
         
         <View style={styles.switchGrid}>
@@ -89,7 +92,7 @@ export default function ViewDownloadSettings() {
               <Text style={styles.switchTitle}>Allow Downloading</Text>
               <Text style={styles.switchSub}>Users can download photos from this group</Text>
             </View>
-            <Switch value={allowDownload} onValueChange={setAllowDownload} trackColor={{ false: '#E5E5EA', true: '#FF6B00' }} />
+            <Switch value={allowDownload} onValueChange={setAllowDownload} trackColor={{ false: '#E5E5EA', true: '#2563EB' }} />
           </View>
 
           <View style={styles.switchCard}>
@@ -97,7 +100,7 @@ export default function ViewDownloadSettings() {
               <Text style={styles.switchTitle}>Enable Sharing</Text>
               <Text style={styles.switchSub}>Users can share photos via social media</Text>
             </View>
-            <Switch value={enableShare} onValueChange={setEnableShare} trackColor={{ false: '#E5E5EA', true: '#FF6B00' }} />
+            <Switch value={enableShare} onValueChange={setEnableShare} trackColor={{ false: '#E5E5EA', true: '#2563EB' }} />
           </View>
 
           <View style={styles.switchCard}>
@@ -105,7 +108,7 @@ export default function ViewDownloadSettings() {
               <Text style={styles.switchTitle}>Enable Screenshots</Text>
               <Text style={styles.switchSub}>Allow users to take screenshots of photos</Text>
             </View>
-            <Switch value={enableScreenshot} onValueChange={setEnableScreenshot} trackColor={{ false: '#E5E5EA', true: '#FF6B00' }} />
+            <Switch value={enableScreenshot} onValueChange={setEnableScreenshot} trackColor={{ false: '#E5E5EA', true: '#2563EB' }} />
           </View>
         </View>
 
@@ -128,36 +131,36 @@ export default function ViewDownloadSettings() {
             <Text style={styles.switchTitle}>Bulk Downloads</Text>
             <Text style={styles.switchSub}>Allow users to download all photos at once</Text>
           </View>
-          <Switch value={bulkDownload} onValueChange={setBulkDownload} trackColor={{ false: '#E5E5EA', true: '#FF6B00' }} />
+          <Switch value={bulkDownload} onValueChange={setBulkDownload} trackColor={{ false: '#E5E5EA', true: '#2563EB' }} />
         </View>
 
         {/* Viewing Settings */}
         <Text style={[styles.sectionTitle, { marginTop: 30 }]}>
-          <MonitorSmartphone color="#FF6B00" size={14} style={{marginRight: 6}} /> Viewing Settings
+          <MonitorSmartphone color="#2563EB" size={14} style={{marginRight: 6}} /> Viewing Settings
         </Text>
         <Text style={styles.subLabel}>Viewing Platforms</Text>
 
         <View style={styles.cardsRow}>
           <TouchableOpacity style={[styles.selectionCard, viewingPlatform.toLowerCase() === 'web' && styles.selectionCardActive]} onPress={() => setViewingPlatform('web')}>
-            <View style={[styles.cardIconBox, { backgroundColor: viewingPlatform.toLowerCase() === 'web' ? '#FFB075' : '#F2F2F7' }]}>
+            <View style={[styles.cardIconBox, { backgroundColor: viewingPlatform.toLowerCase() === 'web' ? '#60A5FA' : '#F2F2F7' }]}>
               <Monitor color={viewingPlatform.toLowerCase() === 'web' ? '#fff' : '#666'} size={18} />
             </View>
             <Text style={[styles.platformTitle, viewingPlatform.toLowerCase() === 'web' && { color: '#111' }]}>Web Only</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.selectionCard, viewingPlatform.toLowerCase() === 'app' && styles.selectionCardActive]} onPress={() => setViewingPlatform('app')}>
-             <View style={[styles.cardIconBox, { backgroundColor: viewingPlatform.toLowerCase() === 'app' ? '#FFB075' : '#F2F2F7' }]}>
+             <View style={[styles.cardIconBox, { backgroundColor: viewingPlatform.toLowerCase() === 'app' ? '#60A5FA' : '#F2F2F7' }]}>
               <Smartphone color={viewingPlatform.toLowerCase() === 'app' ? '#fff' : '#666'} size={18} />
             </View>
             <Text style={[styles.platformTitle, viewingPlatform.toLowerCase() === 'app' && { color: '#111' }]}>App Only</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.selectionCard, viewingPlatform.toLowerCase() === 'both' && styles.selectionCardActive]} onPress={() => setViewingPlatform('both')}>
-             <View style={[styles.cardIconBox, { backgroundColor: viewingPlatform.toLowerCase() === 'both' ? '#FF6B00' : '#F2F2F7' }]}>
+             <View style={[styles.cardIconBox, { backgroundColor: viewingPlatform.toLowerCase() === 'both' ? '#2563EB' : '#F2F2F7' }]}>
               <LayoutGrid color={viewingPlatform.toLowerCase() === 'both' ? '#fff' : '#666'} size={18} />
             </View>
             <Text style={[styles.platformTitle, viewingPlatform.toLowerCase() === 'both' && { color: '#111' }]}>Both Web & App</Text>
-            {viewingPlatform.toLowerCase() === 'both' && <CheckCircle2 color="#FF6B00" size={16} style={styles.scCheck} />}
+            {viewingPlatform.toLowerCase() === 'both' && <CheckCircle2 color="#2563EB" size={16} style={styles.scCheck} />}
           </TouchableOpacity>
         </View>
           </>
@@ -208,11 +211,11 @@ const styles = StyleSheet.create({
 
   horizontalCards: { paddingRight: 20, gap: 10 },
   smallCard: { width: 140, padding: 15, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, backgroundColor: '#fff' },
-  smallCardActive: { borderColor: '#FF6B00', backgroundColor: '#FFF9F2' },
+  smallCardActive: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
   
   cardsRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   selectionCard: { flex: 1, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, padding: 15, position: 'relative', backgroundColor: '#fff' },
-  selectionCardActive: { borderColor: '#FF6B00', backgroundColor: '#FFF9F2' },
+  selectionCardActive: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
   cardIconBox: { width: 36, height: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   
   scTitle: { fontSize: 14, fontWeight: '600', color: '#555', marginBottom: 2 },
@@ -221,7 +224,7 @@ const styles = StyleSheet.create({
   scCheck: { position: 'absolute', top: 10, right: 10 },
 
   floatingFooter: { position: 'absolute', bottom: 0, width: '100%', padding: 15, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#F2F2F7', zIndex: 100 },
-  saveBtn: { backgroundColor: '#FF6B00', paddingVertical: 14, borderRadius: 8, alignItems: 'center' },
+  saveBtn: { backgroundColor: '#2563EB', paddingVertical: 14, borderRadius: 8, alignItems: 'center' },
   saveBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
 
   toastContainer: { position: 'absolute', bottom: 90, left: 0, right: 0, alignItems: 'center', zIndex: 999 },

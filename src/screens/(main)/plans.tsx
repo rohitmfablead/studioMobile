@@ -1,13 +1,15 @@
+import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from '../../utils/routerShim';
 import { X, CheckCircle2, Crown, Zap, Shield, Star } from 'lucide-react-native';
-import { useGetPhotographerPlansQuery } from '../../store/apiSlice';
 import { ActivityIndicator } from 'react-native';
 
 export default function PlansScreen() {
+  const isLoading = false;
+
   const insets = useSafeAreaInsets();
-  const { data, isLoading } = useGetPhotographerPlansQuery();
+  const [data, setData] = useState<any>({});
   const plans = data?.data || [];
 
   const renderPlanCard = (title: string, price: string, iconColor: string, isPopular: boolean, features: any[], IconComponent: any) => (
@@ -73,7 +75,7 @@ export default function PlansScreen() {
           
           {isLoading && (
             <View style={{ width: 300, alignItems: 'center', justifyContent: 'center' }}>
-              <ActivityIndicator size="large" color="#FF6B00" />
+              <ActivityIndicator size="large" color="#2563EB" />
             </View>
           )}
 
@@ -100,7 +102,7 @@ export default function PlansScreen() {
             let isPopular = false;
 
             if (plan.name.toLowerCase().includes('standard')) {
-              iconColor = '#F59E0B';
+              iconColor = '#2563EB';
               IconComponent = Crown;
               isPopular = true;
             } else if (plan.name.toLowerCase().includes('basic')) {
@@ -147,7 +149,7 @@ const styles = StyleSheet.create({
   
   glowOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(245, 158, 11, 0.05)', borderRadius: 24 },
   
-  popularBadge: { position: 'absolute', top: -14, alignSelf: 'center', backgroundColor: '#F59E0B', paddingVertical: 6, paddingHorizontal: 16, borderRadius: 20, shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8 },
+  popularBadge: { position: 'absolute', top: -14, alignSelf: 'center', backgroundColor: '#2563EB', paddingVertical: 6, paddingHorizontal: 16, borderRadius: 20, shadowColor: '#2563EB', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8 },
   popularBadgeText: { color: '#000', fontSize: 10, fontWeight: '800', letterSpacing: 1.5 },
   
   planHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },

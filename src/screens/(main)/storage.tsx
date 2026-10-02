@@ -1,15 +1,17 @@
+import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from '../../utils/routerShim';
 import { X, Sparkles, CheckCircle2, ChevronLeft } from 'lucide-react-native';
-import { useGetUserDetailsQuery } from '../../store/apiSlice';
 import { useSelector } from 'react-redux';
 
 export default function StorageScreen() {
+  const isLoading = false;
+
   const insets = useSafeAreaInsets();
   
   const userId = useSelector((state: any) => state.app.user?.id);
-  const { data: plansData, isLoading } = useGetUserDetailsQuery({ user_id: userId || 994 });
+  const [plansData, set_plansData] = useState<any>({});
   
   // Parse API data
   const apiPlan = plansData?.data?.plans?.[0];
@@ -56,7 +58,7 @@ export default function StorageScreen() {
   if (isLoading) {
     return (
       <View style={{ flex: 1, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#FF6B00" />
+        <ActivityIndicator size="large" color="#2563EB" />
       </View>
     );
   }
@@ -71,7 +73,7 @@ export default function StorageScreen() {
               <ChevronLeft color="#FFFFFF" size={24} />
             </TouchableOpacity>
             <View style={styles.planIconBox}>
-              <Sparkles color="#FF6B00" size={24} />
+              <Sparkles color="#2563EB" size={24} />
             </View>
             <View>
               <Text style={styles.headerSubtitle}>ACTIVE PLAN</Text>
@@ -120,7 +122,7 @@ export default function StorageScreen() {
               <View style={styles.usedBadge}><Text style={styles.usedBadgeText}>{usedVideos} USED</Text></View>
             </View>
             <Text style={styles.cardTotalValue}>{plan.max_videos?.toLocaleString('en-IN')}</Text>
-            <View style={[styles.addonPill, { backgroundColor: '#FFF0E5' }]}><Text style={[styles.addonText, { color: '#FF6B00' }]}>+420</Text></View>
+            <View style={[styles.addonPill, { backgroundColor: '#EFF6FF' }]}><Text style={[styles.addonText, { color: '#2563EB' }]}>+420</Text></View>
             <View style={styles.progressBarBg}>
               <View style={[styles.progressBarFill, { width: '5%', backgroundColor: '#C084FC' }]} />
             </View>
@@ -133,7 +135,7 @@ export default function StorageScreen() {
               <View style={styles.usedBadge}><Text style={styles.usedBadgeText}>{usedStorageMB} MB</Text></View>
             </View>
             <Text style={styles.cardTotalValue}>{plan.max_storage_bytes ? formatGB(plan.max_storage_bytes) : '100'} GB</Text>
-            <View style={[styles.addonPill, { backgroundColor: '#FFF0E5' }]}><Text style={[styles.addonText, { color: '#FF6B00' }]}>+60GB</Text></View>
+            <View style={[styles.addonPill, { backgroundColor: '#EFF6FF' }]}><Text style={[styles.addonText, { color: '#2563EB' }]}>+60GB</Text></View>
             <View style={styles.progressBarBg}>
               <View style={[styles.progressBarFill, { width: '1%', backgroundColor: '#E5E7EB' }]} />
             </View>
@@ -146,7 +148,7 @@ export default function StorageScreen() {
               <View style={styles.usedBadge}><Text style={styles.usedBadgeText}>{usedEvents} USED</Text></View>
             </View>
             <Text style={styles.cardTotalValue}>{plan.max_events?.toLocaleString('en-IN')}</Text>
-            <View style={[styles.addonPill, { backgroundColor: '#FFF0E5' }]}><Text style={[styles.addonText, { color: '#FF6B00' }]}>+20</Text></View>
+            <View style={[styles.addonPill, { backgroundColor: '#EFF6FF' }]}><Text style={[styles.addonText, { color: '#2563EB' }]}>+20</Text></View>
             <View style={styles.progressBarBg}>
               <View style={[styles.progressBarFill, { width: '15%', backgroundColor: '#34D399' }]} />
             </View>
@@ -187,12 +189,12 @@ const styles = StyleSheet.create({
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 15 },
   headerLeftInfo: { flexDirection: 'row', alignItems: 'center' },
   backBtn: { padding: 4, marginRight: 8 },
-  planIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#1A1818', alignItems: 'center', justifyContent: 'center', marginRight: 12, borderWidth: 1, borderColor: '#FF6B00' },
+  planIconBox: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#1A1818', alignItems: 'center', justifyContent: 'center', marginRight: 12, borderWidth: 1, borderColor: '#2563EB' },
   headerSubtitle: { color: '#9CA3AF', fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 2 },
   headerTitle: { color: '#FFFFFF', fontSize: 24, fontWeight: '800' },
   
   headerRightInfo: { flexDirection: 'row', alignItems: 'center' },
-  activeBadge: { backgroundColor: '#FF6B00', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 10 },
+  activeBadge: { backgroundColor: '#2563EB', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 10 },
   activeBadgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
   closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#3F3C3B', alignItems: 'center', justifyContent: 'center' },
   
@@ -216,8 +218,8 @@ const styles = StyleSheet.create({
   usedBadgeText: { color: '#4B5563', fontSize: 10, fontWeight: '700' },
   
   cardTotalValue: { color: '#111827', fontSize: 22, fontWeight: '800', marginBottom: 6 },
-  addonPill: { backgroundColor: '#FFF7ED', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, alignSelf: 'flex-start', marginBottom: 15 },
-  addonText: { color: '#F97316', fontSize: 12, fontWeight: '700' },
+  addonPill: { backgroundColor: '#EFF6FF', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, alignSelf: 'flex-start', marginBottom: 15 },
+  addonText: { color: '#2563EB', fontSize: 12, fontWeight: '700' },
   
   progressBarBg: { width: '100%', height: 6, backgroundColor: '#E5E7EB', borderRadius: 3, overflow: 'hidden' },
   progressBarFill: { height: '100%', borderRadius: 3 },
@@ -231,6 +233,6 @@ const styles = StyleSheet.create({
   actionsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 30 },
   outlineBtn: { flex: 0.48, paddingVertical: 16, borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' },
   outlineBtnText: { color: '#374151', fontSize: 15, fontWeight: '700' },
-  solidBtn: { flex: 0.48, paddingVertical: 16, borderRadius: 12, backgroundColor: '#F97316', alignItems: 'center', justifyContent: 'center' },
+  solidBtn: { flex: 0.48, paddingVertical: 16, borderRadius: 12, backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center' },
   solidBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' }
 });

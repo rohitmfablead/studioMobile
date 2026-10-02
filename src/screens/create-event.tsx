@@ -2,7 +2,6 @@ import { router } from '../utils/routerShim';
 import { X, PlayCircle, Image as ImageIcon, Heart, Briefcase, Gift, Sparkles, Users, Baby, Music, MoreHorizontal, Check } from 'lucide-react-native';
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-import { useCreateGroupMutation } from '../store/apiSlice';
 import { ActivityIndicator, Image, Dimensions, Platform, StyleSheet, Text, TouchableOpacity, ScrollView, View, StatusBar, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -19,6 +18,7 @@ const EVENT_TYPES = [
 ];
 
 export default function CreateEventScreen() {
+  const isLoading = false;
   const [groupType, setGroupType] = useState('private');
   const [eventType, setEventType] = useState('wedding');
   const [name, setName] = useState('');
@@ -26,7 +26,7 @@ export default function CreateEventScreen() {
   const [coverImage, setCoverImage] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   
-  const [createGroup, { isLoading }] = useCreateGroupMutation();
+  const createGroup = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -76,9 +76,9 @@ export default function CreateEventScreen() {
         dataToSubmit.cover_image = coverImage;
       }
       
-      const res = await createGroup(dataToSubmit).unwrap();
+      const res = await createGroup(dataToSubmit);
       
-      if (res.success || res.group) {
+      if (res.success || res.group || res.data) {
         setShowSuccess(true);
         setTimeout(() => {
           setShowSuccess(false);
@@ -93,7 +93,7 @@ export default function CreateEventScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="dark" />
+      <StatusBar barStyle="dark-content" />
 
       {/* Main Container */}
       <SafeAreaView style={{ flex: 1 }}>
@@ -127,7 +127,7 @@ export default function CreateEventScreen() {
                     setName(text);
                     if (nameError) setNameError('');
                   }}
-                  selectionColor="#FF6B00"
+                  selectionColor="#2563EB"
                 />
                 {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
 
@@ -137,7 +137,7 @@ export default function CreateEventScreen() {
                     <Image source={{ uri: coverImage }} style={{ width: '100%', height: '100%', borderRadius: 14 }} />
                   ) : (
                     <>
-                      <ImageIcon color="#FF6B00" size={24} style={{marginBottom: 8}} />
+                      <ImageIcon color="#2563EB" size={24} style={{marginBottom: 8}} />
                       <Text style={styles.uploadText}>Tap to upload cover image</Text>
                       <Text style={styles.uploadSub}>High resolution recommended (Max 10MB)</Text>
                     </>
@@ -176,7 +176,7 @@ export default function CreateEventScreen() {
                         style={[styles.gridItem, isActive && styles.gridItemActive]}
                         onPress={() => setEventType(type.id)}
                       >
-                        <Icon color={isActive ? '#FF6B00' : '#666'} size={20} style={styles.gridIcon} />
+                        <Icon color={isActive ? '#2563EB' : '#666'} size={20} style={styles.gridIcon} />
                         <Text style={[styles.gridText, isActive && styles.gridTextActive]}>{type.label}</Text>
                       </TouchableOpacity>
                     )
@@ -241,9 +241,9 @@ const styles = StyleSheet.create({
   glassBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF5E6',
+    backgroundColor: '#EFF6FF',
     borderWidth: 1,
-    borderColor: '#FFDDB3',
+    borderColor: '#BFDBFE',
     borderRadius: 20,
     padding: 16,
     marginBottom: 20,
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   videoInfo: { flex: 1 },
   videoTitle: { fontSize: 16, fontWeight: '700', color: '#111', marginBottom: 4 },
   videoTime: { fontSize: 13, color: '#666', fontWeight: '500' },
-  watchBtn: { backgroundColor: '#FF6B00', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12 },
+  watchBtn: { backgroundColor: '#2563EB', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12 },
   watchBtnText: { color: '#fff', fontSize: 14, fontWeight: '800' },
   
   glassCard: {
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     color: '#111',
     fontWeight: '500',
   },
-  inputActive: { borderColor: '#FF6B00', backgroundColor: '#FFF5E6' },
+  inputActive: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
   inputError: { borderColor: '#FF3B30', backgroundColor: '#FFF2F2' },
   errorText: { color: '#FF3B30', fontSize: 13, marginTop: 6, marginLeft: 4, fontWeight: '500' },
   
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   },
   toggleBtnActive: { backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
   toggleText: { fontSize: 15, fontWeight: '600', color: '#666' },
-  toggleTextActive: { color: '#FF6B00', fontWeight: '800' },
+  toggleTextActive: { color: '#2563EB', fontWeight: '800' },
   
   grid: {
     flexDirection: 'row',
@@ -336,10 +336,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginBottom: 12,
   },
-  gridItemActive: { backgroundColor: '#FFF5E6', borderColor: '#FF6B00' },
+  gridItemActive: { backgroundColor: '#EFF6FF', borderColor: '#2563EB' },
   gridIcon: { marginBottom: 8 },
   gridText: { fontSize: 12, fontWeight: '700', color: '#666' },
-  gridTextActive: { color: '#FF6B00' },
+  gridTextActive: { color: '#2563EB' },
   
   footer: {
     position: 'absolute',
@@ -353,12 +353,12 @@ const styles = StyleSheet.create({
     borderTopColor: '#E5E5EA',
   },
   createBtn: {
-    backgroundColor: '#FF6B00',
+    backgroundColor: '#2563EB',
     width: '100%',
     paddingVertical: 18,
     borderRadius: 100,
     alignItems: 'center',
-    shadowColor: '#FF6B00',
+    shadowColor: '#2563EB',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,

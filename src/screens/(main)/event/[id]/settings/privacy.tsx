@@ -3,12 +3,15 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, ActivityI
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from '../../../../../utils/routerShim';
 import { ChevronLeft, Edit3, Link as LinkIcon, EyeOff, ScanFace, Lock, Globe, Users, CheckCircle2 } from 'lucide-react-native';
-import { useGetGroupDetailsQuery, useUpdateGroupDetailsMutation } from '../../../../../store/apiSlice';
 
 export default function PrivacySettings() {
+  const refetch = () => {};
+  const isUpdating = false;
+  const isLoading = false;
+
   const { id } = useLocalSearchParams();
-  const { data, isLoading, refetch } = useGetGroupDetailsQuery(id as string);
-  const [updateGroupDetails, { isLoading: isUpdating }] = useUpdateGroupDetailsMutation();
+  const [data, setData] = useState<any>({});
+  const updateGroupDetails = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
 
   const [canChangeName, setCanChangeName] = useState(false);
   const [linkJoin, setLinkJoin] = useState(true);
@@ -42,7 +45,7 @@ export default function PrivacySettings() {
           uploadPermission: uploadPerm === 'All' ? 'all' : 'select'
         }
       };
-      const res = await updateGroupDetails({ id: id as string, body: payload }).unwrap();
+      const res = await updateGroupDetails({ id: id as string, body: payload });
       if (res.success) {
         setToastMsg('Privacy settings updated!');
         setTimeout(() => setToastMsg(''), 3000);
@@ -80,7 +83,7 @@ export default function PrivacySettings() {
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 50 }}>
         {isLoading ? (
           <View style={{ padding: 20, alignItems: 'center' }}>
-            <ActivityIndicator size="large" color="#FF6B00" />
+            <ActivityIndicator size="large" color="#2563EB" />
           </View>
         ) : (
           <>
@@ -99,7 +102,7 @@ export default function PrivacySettings() {
                 <Text style={styles.switchSub}>Allow all members to edit group name and icon</Text>
               </View>
             </View>
-            <Switch value={canChangeName} onValueChange={setCanChangeName} trackColor={{ false: '#E5E5EA', true: '#FF6B00' }} />
+            <Switch value={canChangeName} onValueChange={setCanChangeName} trackColor={{ false: '#E5E5EA', true: '#2563EB' }} />
           </View>
           
           <View style={styles.switchCard}>
@@ -112,7 +115,7 @@ export default function PrivacySettings() {
                 <Text style={styles.switchSub}>Users with the group link can join without invitation</Text>
               </View>
             </View>
-            <Switch value={linkJoin} onValueChange={setLinkJoin} trackColor={{ false: '#E5E5EA', true: '#FF6B00' }} />
+            <Switch value={linkJoin} onValueChange={setLinkJoin} trackColor={{ false: '#E5E5EA', true: '#2563EB' }} />
           </View>
 
           <View style={styles.switchCard}>
@@ -125,20 +128,20 @@ export default function PrivacySettings() {
                 <Text style={styles.switchSub}>Users can join and view group photos without Login</Text>
               </View>
             </View>
-            <Switch value={anonView} onValueChange={setAnonView} trackColor={{ false: '#E5E5EA', true: '#FF6B00' }} />
+            <Switch value={anonView} onValueChange={setAnonView} trackColor={{ false: '#E5E5EA', true: '#2563EB' }} />
           </View>
 
           <View style={styles.switchCard}>
             <View style={styles.switchLeft}>
-              <View style={[styles.iconBox, { backgroundColor: '#FFF7ED' }]}>
-                <ScanFace color="#F97316" size={16} />
+              <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}>
+                <ScanFace color="#2563EB" size={16} />
               </View>
               <View style={styles.switchTextContainer}>
                 <Text style={styles.switchTitle}>Liveness Detection</Text>
                 <Text style={styles.switchSub}>Verify real users with facial liveness detection</Text>
               </View>
             </View>
-            <Switch value={liveness} onValueChange={setLiveness} trackColor={{ false: '#E5E5EA', true: '#FF6B00' }} />
+            <Switch value={liveness} onValueChange={setLiveness} trackColor={{ false: '#E5E5EA', true: '#2563EB' }} />
           </View>
         </View>
 
@@ -148,14 +151,14 @@ export default function PrivacySettings() {
         </Text>
         <View style={styles.cardsRow}>
           <TouchableOpacity style={[styles.selectionCard, photoAccess === 'Small' && styles.selectionCardActive]} onPress={() => setPhotoAccess('Small')}>
-            <View style={[styles.cardIconBox, { backgroundColor: photoAccess === 'Small' ? '#FFB075' : '#E5E7EB' }]}>
+            <View style={[styles.cardIconBox, { backgroundColor: photoAccess === 'Small' ? '#60A5FA' : '#E5E7EB' }]}>
               <Lock color="#fff" size={18} />
             </View>
             <Text style={[styles.scTitle, photoAccess === 'Small' && { color: '#111' }]}>Small Personal Group</Text>
             <Text style={styles.scSub}>Private access for selected members only</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.selectionCard, photoAccess === 'Big' && styles.selectionCardActive]} onPress={() => setPhotoAccess('Big')}>
-             <View style={[styles.cardIconBox, { backgroundColor: photoAccess === 'Big' ? '#FFB075' : '#E5E7EB' }]}>
+             <View style={[styles.cardIconBox, { backgroundColor: photoAccess === 'Big' ? '#60A5FA' : '#E5E7EB' }]}>
               <Globe color="#666" size={18} />
             </View>
             <Text style={[styles.scTitle, photoAccess === 'Big' && { color: '#111' }]}>Big Public Group</Text>
@@ -169,20 +172,20 @@ export default function PrivacySettings() {
         </Text>
         <View style={styles.cardsRow}>
           <TouchableOpacity style={[styles.selectionCard, uploadPerm === 'Select' && styles.selectionCardActive]} onPress={() => setUploadPerm('Select')}>
-            <View style={[styles.cardIconBox, { backgroundColor: uploadPerm === 'Select' ? '#FFB075' : '#E5E7EB' }]}>
+            <View style={[styles.cardIconBox, { backgroundColor: uploadPerm === 'Select' ? '#60A5FA' : '#E5E7EB' }]}>
               <Users color="#666" size={18} />
             </View>
             <Text style={[styles.scTitle, uploadPerm === 'Select' && { color: '#111' }]}>Select Users</Text>
             <Text style={styles.scSub}>Only selected users can upload photos</Text>
-            {uploadPerm === 'Select' && <CheckCircle2 color="#FF6B00" size={16} style={styles.scCheck} />}
+            {uploadPerm === 'Select' && <CheckCircle2 color="#2563EB" size={16} style={styles.scCheck} />}
           </TouchableOpacity>
           <TouchableOpacity style={[styles.selectionCard, uploadPerm === 'All' && styles.selectionCardActive]} onPress={() => setUploadPerm('All')}>
-             <View style={[styles.cardIconBox, { backgroundColor: uploadPerm === 'All' ? '#FF6B00' : '#E5E7EB' }]}>
+             <View style={[styles.cardIconBox, { backgroundColor: uploadPerm === 'All' ? '#2563EB' : '#E5E7EB' }]}>
               <Users color="#fff" size={18} />
             </View>
             <Text style={[styles.scTitle, uploadPerm === 'All' && { color: '#111' }]}>All Participants</Text>
             <Text style={styles.scSub}>Every member can upload photos</Text>
-            {uploadPerm === 'All' && <CheckCircle2 color="#FF6B00" size={16} style={styles.scCheck} />}
+            {uploadPerm === 'All' && <CheckCircle2 color="#2563EB" size={16} style={styles.scCheck} />}
           </TouchableOpacity>
         </View>
 
@@ -210,7 +213,7 @@ const styles = StyleSheet.create({
   backBtn: { marginRight: 12, padding: 4 },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#111' },
   headerSubtitle: { fontSize: 12, color: '#666', marginTop: 2 },
-  saveBtn: { backgroundColor: '#FF6B00', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+  saveBtn: { backgroundColor: '#2563EB', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
   saveBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
 
   content: { flex: 1, padding: 15 },
@@ -226,7 +229,7 @@ const styles = StyleSheet.create({
 
   cardsRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
   selectionCard: { flex: 1, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12, padding: 15, position: 'relative', backgroundColor: '#fff' },
-  selectionCardActive: { borderColor: '#FF6B00', backgroundColor: '#FFF9F2' },
+  selectionCardActive: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
   cardIconBox: { width: 36, height: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 15 },
   scTitle: { fontSize: 14, fontWeight: '600', color: '#555', marginBottom: 4 },
   scSub: { fontSize: 11, color: '#888', lineHeight: 16 },

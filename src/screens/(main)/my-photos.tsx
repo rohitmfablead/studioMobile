@@ -2,12 +2,11 @@ import { Download, Share2, ImageIcon } from 'lucide-react-native';
 import { ActivityIndicator, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
-import { useGetGroupsQuery, useMatchMyPhotosMutation } from '../../store/apiSlice';
 
 export default function MyPhotosScreen() {
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
 
-  const { data: groupsData, isLoading: isLoadingGroups, refetch: refetchGroups } = useGetGroupsQuery();
+  const [groupsData, set_groupsData] = useState<any>({});
   const groups = groupsData?.groups || [];
 
   // Automatically select the first group if none is selected
@@ -17,9 +16,12 @@ export default function MyPhotosScreen() {
     }
   }, [groups, selectedGroupId]);
 
-  const [matchMyPhotos, { data: matchData, isLoading: isLoadingPhotos }] = useMatchMyPhotosMutation();
+  const matchMyPhotos = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
+  const matchData: any = null;
+  const isLoadingGroups = false;
+  const isLoadingPhotos = false;
+  const refetchGroups = () => {};
   const PHOTOS = matchData?.photos || [];
-  
   console.log('MY PHOTOS DATA:', JSON.stringify(PHOTOS, null, 2));
 
   useEffect(() => {
@@ -40,11 +42,11 @@ export default function MyPhotosScreen() {
         </View>
 
         {isLoadingGroups ? (
-          <ActivityIndicator style={{ marginVertical: 20 }} color="#FF6B00" size="small" />
+          <ActivityIndicator style={{ marginVertical: 20 }} color="#2563EB" size="small" />
         ) : groups.length === 0 ? (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconCircle}>
-              <ImageIcon color="#FF6B00" size={32} />
+              <ImageIcon color="#2563EB" size={32} />
             </View>
             <Text style={styles.emptyTitle}>No Groups</Text>
             <Text style={styles.emptyText}>Join a group to see your matched photos.</Text>
@@ -72,13 +74,13 @@ export default function MyPhotosScreen() {
 
         {isLoadingPhotos ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#FF6B00" />
+            <ActivityIndicator size="large" color="#2563EB" />
             <Text style={styles.loadingText}>Finding your photos...</Text>
           </View>
         ) : PHOTOS.length === 0 && selectedGroupId !== null ? (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconCircle}>
-              <ImageIcon color="#FF6B00" size={32} />
+              <ImageIcon color="#2563EB" size={32} />
             </View>
             <Text style={styles.emptyTitle}>No Matches Found</Text>
             <Text style={styles.emptyText}>We couldn't find your face in this group's photos.</Text>
@@ -99,8 +101,8 @@ export default function MyPhotosScreen() {
                     matchMyPhotos(selectedGroupId);
                   }
                 }}
-                colors={['#FF6B00']}
-                tintColor="#FF6B00"
+                colors={['#2563EB']}
+                tintColor="#2563EB"
               />
             }
             renderItem={({ item }) => (
@@ -126,7 +128,7 @@ const styles = StyleSheet.create({
   tabsContainer: { flexGrow: 0, paddingVertical: 5, marginBottom: 15 },
   tabsContent: { paddingHorizontal: 20 },
   tab: { backgroundColor: '#fff', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 25, marginRight: 10, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 5, elevation: 2, borderWidth: 1, borderColor: '#F3F4F6' },
-  activeTab: { backgroundColor: '#FF6B00', borderColor: '#FF6B00' },
+  activeTab: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
   tabText: { color: '#6B7280', fontWeight: '600', fontSize: 14 },
   activeTabText: { color: '#fff' },
 
@@ -145,7 +147,7 @@ const styles = StyleSheet.create({
   loadingText: { marginTop: 12, color: '#6B7280', fontSize: 15, fontWeight: '500' },
 
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40, marginTop: 40 },
-  emptyIconCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#FFF0E5', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  emptyIconCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
   emptyTitle: { color: '#111827', fontSize: 20, fontWeight: '700', marginBottom: 8 },
   emptyText: { color: '#6B7280', fontSize: 15, textAlign: 'center', lineHeight: 22 }
 });

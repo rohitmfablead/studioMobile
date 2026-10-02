@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   senderName: { fontSize: 12, color: '#666', marginBottom: 4, marginLeft: 2 },
   
   messageBubble: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20 },
-  messageBubbleMe: { backgroundColor: '#FF6B00', borderBottomRightRadius: 4 },
+  messageBubbleMe: { backgroundColor: '#2563EB', borderBottomRightRadius: 4 },
   messageBubbleOther: { backgroundColor: '#fff', borderBottomLeftRadius: 4, borderWidth: 1, borderColor: '#F2F2F7' },
   
   messageText: { fontSize: 15, lineHeight: 22 },
@@ -101,5 +101,5 @@ const styles = StyleSheet.create({
   attachBtn: { padding: 10, marginRight: 5 },
   textInput: { flex: 1, backgroundColor: '#F2F2F7', borderRadius: 20, paddingHorizontal: 15, paddingVertical: 10, fontSize: 15, color: '#111', maxHeight: 100 },
   sendBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#ccc', justifyContent: 'center', alignItems: 'center', marginLeft: 10 },
-  sendBtnActive: { backgroundColor: '#FF6B00' },
+  sendBtnActive: { backgroundColor: '#2563EB' },
 });

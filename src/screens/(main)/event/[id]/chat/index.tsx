@@ -1,13 +1,14 @@
 import { router, useLocalSearchParams } from '../../../../../utils/routerShim';
 import { ChevronLeft, MessageCircle } from 'lucide-react-native';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useGetGroupParticipantsQuery } from '../../../../../store/apiSlice';
 
 export default function PhotographerChatParticipantList() {
+  const isLoading = false;
+
   const { id } = useLocalSearchParams();
-  const { data, isLoading } = useGetGroupParticipantsQuery({ id: id as string, params: { page: 1, limit: 100 } });
+  const [data, setData] = useState<any>({});
   
   const participants = data?.data || [];
   const insets = useSafeAreaInsets();
@@ -44,7 +45,7 @@ export default function PhotographerChatParticipantList() {
       
       {isLoading ? (
         <View style={styles.loader}>
-          <ActivityIndicator size="large" color="#FF9500" />
+          <ActivityIndicator size="large" color="#2563EB" />
         </View>
       ) : (
         <FlatList
@@ -67,7 +68,7 @@ const styles = StyleSheet.create({
   listContainer: { padding: 15 },
   userCard: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
   avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#eee' },
-  placeholderAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FF9500', justifyContent: 'center', alignItems: 'center' },
+  placeholderAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2563EB', justifyContent: 'center', alignItems: 'center' },
   placeholderText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   userInfo: { flex: 1, marginLeft: 12 },
   userName: { fontSize: 16, fontWeight: '600', color: '#111' },

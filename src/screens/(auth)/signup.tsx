@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ImageBackground, KeyboardAvoidingView, Platform, StatusBar, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ImageBackground, KeyboardAvoidingView, Platform, StatusBar, ScrollView, Image } from 'react-native';
 import { router } from '../../utils/routerShim';
 import { useState } from 'react';
 import { Mail, ArrowRight, User, Lock, ScanFace } from 'lucide-react-native';
@@ -28,9 +28,9 @@ export default function SignupScreen() {
             {/* Top Logo Section */}
             <View style={[styles.headerContainer, { paddingTop: insets.top + 40 }]}>
               <View style={styles.glassBadge}>
-                <ScanFace color="#fff" size={32} strokeWidth={1.5} />
+                <Image source={require('../../../assets/images/icon.png')} style={{ width: 48, height: 48, borderRadius: 12 }} resizeMode="contain" />
               </View>
-              <Text style={styles.logoText}>Fablead AI</Text>
+              <Text style={styles.logoText}>VisionGallery</Text>
             </View>
 
             {/* Spacer to push card to bottom */}

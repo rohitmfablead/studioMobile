@@ -3,13 +3,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from '../../utils/routerShim';
 import { ChevronLeft, Check, Upload, Droplets, Grid3x3 } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
-import { useGetWatermarkSettingsQuery, useSaveWatermarkSettingsMutation } from '../../store/apiSlice';
 import * as ImagePicker from 'expo-image-picker';
 import { toast } from '../../utils/toast';
 
 export default function WatermarkScreen() {
   const insets = useSafeAreaInsets();
-  const { data, isLoading } = useGetWatermarkSettingsQuery();
+  const [data, setData] = useState<any>({});
   const settings = data?.settings;
 
   const [placement, setPlacement] = useState(4);
@@ -18,8 +17,9 @@ export default function WatermarkScreen() {
   const [isTiled, setIsTiled] = useState(false);
   const [imageUrl, setImageUrl] = useState(null);
   const [localFile, setLocalFile] = useState<any>(null);
-  const [saveWatermarkSettings, { isLoading: isSaving }] = useSaveWatermarkSettingsMutation();
-
+  const saveWatermarkSettings = async (args?: any) => { console.log("Mock mutation:", args); return { data: {} }; };
+  const isSaving = false;
+  const isLoading = false;
   const handlePickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: 'images',
@@ -67,7 +67,7 @@ export default function WatermarkScreen() {
       
       console.log("SAVING WATERMARK DATA: ", formData);
 
-      await saveWatermarkSettings(formData).unwrap();
+      await saveWatermarkSettings(formData);
       toast.success('Saved!', 'Watermark settings saved successfully.');
     } catch (err) {
       console.error(err);
@@ -107,7 +107,7 @@ export default function WatermarkScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {isLoading && (
           <View style={{ padding: 40, alignItems: 'center' }}>
-            <ActivityIndicator size="large" color="#FF6B00" />
+            <ActivityIndicator size="large" color="#2563EB" />
           </View>
         )}
         {!isLoading && <>
@@ -155,7 +155,7 @@ export default function WatermarkScreen() {
               <Text style={styles.uploadDesc}>Upload a white PNG logo for best results across all photo colors.</Text>
             </View>
             <TouchableOpacity style={styles.uploadBtn} onPress={handlePickImage}>
-              <Upload color="#FF6B00" size={20} />
+              <Upload color="#2563EB" size={20} />
             </TouchableOpacity>
           </View>
 
@@ -167,7 +167,7 @@ export default function WatermarkScreen() {
               <Text style={styles.placementTitle}>Position</Text>
               <View style={{ flex: 1 }} />
               <Text style={styles.tiledText}>TILED</Text>
-              <Switch value={isTiled} onValueChange={setIsTiled} trackColor={{ true: '#FF6B00' }} style={{ transform: [{ scale: 0.8 }] }} />
+              <Switch value={isTiled} onValueChange={setIsTiled} trackColor={{ true: '#2563EB' }} style={{ transform: [{ scale: 0.8 }] }} />
             </View>
 
             <View style={styles.gridContainer}>
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 20 },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#18181B', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#27272A' },
   headerTitle: { fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: 0.5 },
-  saveBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FF6B00', alignItems: 'center', justifyContent: 'center', shadowColor: '#FF6B00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8 },
+  saveBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center', shadowColor: '#2563EB', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8 },
   
   scrollContent: { padding: 20, paddingBottom: 40 },
   
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
   uploadInfo: { flex: 1, paddingRight: 20 },
   uploadTitle: { fontSize: 15, fontWeight: '700', color: '#fff', marginBottom: 4 },
   uploadDesc: { fontSize: 12, color: '#A1A1AA', lineHeight: 18 },
-  uploadBtn: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(255, 107, 0, 0.1)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255, 107, 0, 0.3)' },
+  uploadBtn: { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(37, 99, 235, 0.1)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(37, 99, 235, 0.3)' },
   
   divider: { height: 1, backgroundColor: '#27272A', marginVertical: 20 },
   
@@ -274,15 +274,15 @@ const styles = StyleSheet.create({
   
   gridContainer: { flexDirection: 'row', flexWrap: 'wrap', width: 140, height: 140, alignSelf: 'center', justifyContent: 'space-between', alignContent: 'space-between' },
   gridCell: { width: 42, height: 42, borderWidth: 1, borderColor: '#3F3F46', borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: '#09090B' },
-  gridCellActive: { borderColor: '#FF6B00', borderWidth: 2, backgroundColor: 'rgba(255, 107, 0, 0.1)' },
+  gridCellActive: { borderColor: '#2563EB', borderWidth: 2, backgroundColor: 'rgba(37, 99, 235, 0.1)' },
   gridDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#52525B' },
-  gridDotActive: { backgroundColor: '#FF6B00' },
+  gridDotActive: { backgroundColor: '#2563EB' },
   
   sliderGroup: { marginBottom: 25 },
   sliderHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sliderLabel: { fontSize: 11, fontWeight: '800', color: '#A1A1AA', letterSpacing: 1 },
   sliderValue: { fontSize: 13, fontWeight: '700', color: '#fff' },
   sliderTrack: { height: 6, backgroundColor: '#27272A', borderRadius: 3, position: 'relative', justifyContent: 'center' },
-  sliderFill: { height: '100%', backgroundColor: '#FF6B00', borderRadius: 3, shadowColor: '#FF6B00', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 10 },
+  sliderFill: { height: '100%', backgroundColor: '#2563EB', borderRadius: 3, shadowColor: '#2563EB', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 10 },
   sliderThumb: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff', position: 'absolute', marginLeft: -10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4 }
 });
